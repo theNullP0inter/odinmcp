@@ -1,0 +1,63 @@
+version: "3.7"
+
+services:
+
+  llmate-db:
+    image: postgres:16
+    container_name: llmate-db
+    restart: always
+    env_file:
+      - ./env/llmate-db.env
+    volumes:
+      - llmate_db_data:/var/lib/postgresql/data
+      - ./conf/llmate-db/create-initial-databases.sh:/docker-entrypoint-initdb.d/create-initial-databases.sh
+    networks:
+      - llmate_net
+
+
+  heimdall:
+    image: heimdall
+    container_name: heimdall
+    build:
+      context: ./heimdall
+    restart: always
+    env_file:
+      - ./env/heimdall.env
+    ports:
+      - 8080:8080
+      - 8443:8443
+      - 9000:9000
+      # - 7600-7800:7600-7800
+      # - 57600-57800:57600-57800
+    networks:
+      - llmate_pub
+      - llmate_net
+    depends_on:
+      - llmate-db
+   
+
+
+volumes:
+  llmate_db_data: {}
+
+
+networks:
+  default:
+    driver: bridge
+  llmate_pub:
+    # open network access, please use only when necessary
+    internal: false
+  llmate_net:
+    # private, inter-system channel
+    internal: true
+
+
+
+# postgres -> llmate-db
+# keycloak -> heimdall
+# kong -> bifrost
+# redis
+# pushpin -> harbinger
+# airbyte -> Huginn
+# airflow -> Muninn
+# postgres for pipelines -> mimir
