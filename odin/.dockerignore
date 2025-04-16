@@ -1,29 +1,7 @@
-data/
-target/
-*~
-*.DS_Store
-.idea
-.settings
-.project
-bin/
-*iml
-.node
-tmp/*
-dependency-reduced-pom.xml
-.classpath
-.factorypath
-.vscode
-.swagger*
-src/main/resources/META-INF/jpa-changelog-phasetwo-full.xml
-
-*.env
-env/
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-temp/
 
 # C extensions
 *.so
@@ -121,6 +99,7 @@ celerybeat-schedule
 # Environments
 .env
 .venv
+.venv/
 env/
 venv/
 **/.venv/*
@@ -153,6 +132,7 @@ dmypy.json
 # MacOS
 .DS_Store
 
+env/
 output/
 
 # Repo specific
