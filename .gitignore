@@ -17,7 +17,8 @@ dependency-reduced-pom.xml
 src/main/resources/META-INF/jpa-changelog-phasetwo-full.xml
 
 *.env
-env/
+.env/
+.conf/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

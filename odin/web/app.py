@@ -14,7 +14,9 @@ app = FastAPI(
     title="Odin API",
     version="1.0.0",
     middleware=MIDDLEWARE,
-    debug=settings.DEBUG
+    debug=settings.DEBUG,
+    docs_url="/docs/",
+    redoc_url="/redoc/",
 )
 
 mcp = FastMCP("Odin MCP", debug=settings.DEBUG)
