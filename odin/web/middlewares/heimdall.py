@@ -2,30 +2,24 @@ import base64
 import json
 from typing import Type
 
-import jwt
-
 from models.user import CurrentUser
 from monitors.logging import logger
 
-
-
 class CurrentUserMiddleware:
-        
+    
     async def __call__(self, request, call_next):
-        auth_token = request.headers.get("authorization")
-        access_token = auth_token.split(" ")[1] if auth_token else None
+        user_info_token = request.headers.get("x-userinfo")
         
-        if access_token:
+        if user_info_token:
             try:
-                user_info = jwt.decode(
-                    access_token, 
-                    options={"verify_signature": False}
-                )
-                request.state.user = CurrentUser.from_info(
-                    user_info
-                )
+                # Decode the token from base64, then decode bytes to string, and load the JSON
+                user_info_bytes = base64.b64decode(user_info_token)
+                user_info_str = user_info_bytes.decode("utf-8")
+                user_info = json.loads(user_info_str)
+                
+                request.state.user = CurrentUser.from_info(user_info)
             except Exception as e:
-                logger.error(f"Error parsing access_token", extra={"access_token": access_token, "error":e})
+                logger.error("Error parsing user_info_token", extra={"user_info_token": user_info_token, "error": e})
                 request.state.user = None
         else:
             request.state.user = None
