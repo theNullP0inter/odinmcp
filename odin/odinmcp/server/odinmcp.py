@@ -3,17 +3,18 @@ from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.routing import Mount, Route
 from starlette.exceptions import HTTPException
-from mcp.server.sse import SseServerTransport
 from starlette.types import Receive, Scope, Send
 from monitors.logging import logger
 from models.user import User
-
+from core.config import settings
+from odinmcp.server.sse import OdinSseServerTransport
 
 class OdinMCP(FastMCP):
     organization_path_param = "org_code"
+    mcp_route_prefix = "odinmcp"
     
     def sse_app(self):
-        sse = SseServerTransport(self.settings.message_path)
+        sse = OdinSseServerTransport(self.settings.message_path)
         
         def check_user_access(request: Request, org_code: str)->User:
             user: User = request.state.user
@@ -30,6 +31,7 @@ class OdinMCP(FastMCP):
                 request.scope,
                 request.receive,
                 request._send,  # type: ignore[reportPrivateUsage]
+                settings.ROOT_PATH +f"/{self.mcp_route_prefix}/"+ request.path_params[self.organization_path_param],
             ) as streams:
                 await self._mcp_server.run(
                     streams[0],
@@ -40,7 +42,8 @@ class OdinMCP(FastMCP):
         async def handle_post_message(scope: Scope, receive: Receive, send: Send) -> None:
             request = Request(scope, receive)
             check_user_access(request, request.path_params[self.organization_path_param])
-            return await sse.handle_post_message(request)
+            logger.debug(f"Handling POST message for organization {request.path_params[self.organization_path_param]}")
+            return await sse.handle_post_message(scope, receive, send)
             
         return Starlette(
             debug=self.settings.debug,

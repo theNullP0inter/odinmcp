@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     ALLOWED_HOSTS: List[str]
     ENV: str
     DEBUG: bool
+    ROOT_PATH: str = "/"
     
     HEIMDALL_ADMIN_CLIENT_ID: str
     HEIMDALL_ADMIN_CLIENT_SECRET: str

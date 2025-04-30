@@ -23,7 +23,7 @@ mcp = OdinMCP("Odin MCP", debug=settings.DEBUG)
 
 
 app.mount(
-    "/odinmcp/{"+ mcp.organization_path_param +"}",
+    "/"+ mcp.mcp_route_prefix +"/{"+ mcp.organization_path_param +"}",
     mcp.sse_app(),
     name="mcp",
 )

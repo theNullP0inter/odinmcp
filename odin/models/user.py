@@ -3,7 +3,8 @@ from typing import Any, Dict, List
 
 
 class User(BaseModel):
-    id:str
+    user_id:str
+    name: str
     email:str
     name: str
     organization: List[str]

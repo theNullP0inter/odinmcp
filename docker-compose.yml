@@ -47,9 +47,9 @@ services:
       - ./.conf/bifrost/config.yml:/kong/declarative/kong.yml
     ports:
       - 8000:8000
-      - 8443:8443
-      - 8444:8444
-      - 8001-8005:8001-8005
+      # - 8443:8443
+      # - 8444:8444
+      # - 8001-8005:8001-8005
     
 
   odin:
@@ -70,7 +70,6 @@ services:
       - ./odin:/app
     # ports:
     #   - 80:80
-   
 
 volumes:
   postgres_db_data: {}
