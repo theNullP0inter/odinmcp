@@ -1,11 +1,12 @@
 from pydantic import BaseModel
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 
-class BaseUser(BaseModel):
+class User(BaseModel):
     id:str
     email:str
     name: str
+    organization: List[str]
 
     class Config:
         arbitrary_types_allowed = True
@@ -15,6 +16,3 @@ class BaseUser(BaseModel):
         return cls(
             **info
         )
-        
-class CurrentUser(BaseUser):
-    pass

@@ -68,8 +68,8 @@ services:
       - heimdall
     volumes:
       - ./odin:/app
-    ports:
-      - 80:80
+    # ports:
+    #   - 80:80
    
 
 volumes:
@@ -85,14 +85,3 @@ networks:
   asgard_net:
     # private, inter-system channel
     internal: true
-
-
-
-# postgres -> db
-# keycloak -> heimdall
-# kong -> bifrost
-# redis
-# pushpin -> harbinger
-# airbyte -> Huginn
-# airflow -> Muninn
-# postgres for pipelines -> mimir

@@ -1,5 +1,5 @@
 from fastapi import Depends, FastAPI, Request
-from mcp.server.fastmcp import FastMCP
+from odinmcp.server.odinmcp import OdinMCP
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware import Middleware
 
@@ -19,11 +19,11 @@ app = FastAPI(
     redoc_url="/redoc/",
 )
 
-mcp = FastMCP("Odin MCP", debug=settings.DEBUG)
+mcp = OdinMCP("Odin MCP", debug=settings.DEBUG)
 
 
 app.mount(
-    "/mcp",
+    "/odinmcp/{"+ mcp.organization_path_param +"}",
     mcp.sse_app(),
     name="mcp",
 )

@@ -2,7 +2,7 @@ import base64
 import json
 from typing import Type
 
-from models.user import CurrentUser
+from models.user import User
 from monitors.logging import logger
 
 class CurrentUserMiddleware:
@@ -17,7 +17,7 @@ class CurrentUserMiddleware:
                 user_info_str = user_info_bytes.decode("utf-8")
                 user_info = json.loads(user_info_str)
                 
-                request.state.user = CurrentUser.from_info(user_info)
+                request.state.user = User.from_info(user_info)
             except Exception as e:
                 logger.error("Error parsing user_info_token", extra={"user_info_token": user_info_token, "error": e})
                 request.state.user = None
