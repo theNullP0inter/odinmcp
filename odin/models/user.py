@@ -26,9 +26,8 @@ class User(BaseModel):
             )
             
         info["organizations"] = mapped_orgs
-        del info["organization"]
-        
-        print(f"User info: {info}")
+        if "organization" in info:
+            del info["organization"]
         return cls(
             **info
         )

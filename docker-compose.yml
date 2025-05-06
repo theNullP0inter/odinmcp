@@ -19,6 +19,7 @@ services:
     container_name: heimdall
     build:
       context: ./heimdall
+    command: ["-v", "start", "--optimized", "--spi-theme-cache-themes=false", "--import-realm"]
     restart: always
     env_file:
       - ./.env/heimdall.env
@@ -32,6 +33,8 @@ services:
       - asgard_net
     depends_on:
       - postgres-db
+    volumes:
+      - ./.conf/heimdall/asgard-realm.json:/opt/keycloak/data/import/asgard-realm.json
   
   bifrost:
     image: bifrost

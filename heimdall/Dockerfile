@@ -16,4 +16,4 @@ COPY --from=keycloak-builder /opt/keycloak/providers/ /opt/keycloak/providers/
 ENV KC_DB=postgres
 
 # Define the entrypoint for Keycloak with all runtime flags
-ENTRYPOINT ["/opt/keycloak/bin/kc.sh", "-v", "start", "--optimized", "--spi-theme-cache-themes=false"]
+ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
