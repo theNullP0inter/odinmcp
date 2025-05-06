@@ -21,7 +21,7 @@ class OdinMCP(FastMCP):
             if not user:
                 raise HTTPException(status_code=401, detail='Unauthorized')
             
-            if org_code not in user.organization:
+            if org_code not in user.organizations:
                 raise HTTPException(status_code=403, detail='Forbidden. User does not have access to this organization')
             return user
 
