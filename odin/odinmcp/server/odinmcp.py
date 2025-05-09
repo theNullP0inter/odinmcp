@@ -11,7 +11,7 @@ from odinmcp.server.sse import OdinSseServerTransport
 
 class OdinMCP(FastMCP):
     organization_path_param = "org_code"
-    mcp_route_prefix = "odinmcp"
+    mcp_route_prefix = "mcp"
     
     def sse_app(self):
         sse = OdinSseServerTransport(self.settings.message_path)
