@@ -94,27 +94,116 @@ Key components include:
 
 
 
-## Getting Started
+## Getting Started with Asgard
 
-Follow these steps to set up and run Asgard on your local machine:
+This guide will walk you through setting up and running Asgard on your local machine.
 
-1. **Setup Environment:**
-   Execute the setup script to prepare sample configuration and environment files.
-   ```bash
-   ./setup.sh
+---
+
+### 1. Setup Environment
+
+Prepare your local environment by running the setup script. This script creates sample configuration and environment files needed for Asgard.
+
+```bash
+./setup.sh
+```
+
+---
+
+### 2. Start Services
+
+Launch all required services using Docker Compose:
+
+```bash
+docker-compose up
+```
+
+---
+
+### 3. Configure Keycloak
+
+Keycloak is used as the identity provider. Follow these steps to configure it:
+
+#### a. Access the Admin Console
+
+1. Open your browser and navigate to:  
+   `http://localhost:8000/heimdall/`
+2. Log in with the following admin credentials:
+   - **Username:** `admin`
+   - **Password:** `adminpassword`
+
+#### b. Verify Pre-Configured Settings
+
+- A sample realm named `asgard` should already exist.
+- The necessary sample clients have been pre-configured within the realm.
+
+#### c. Create a New Organization and User
+
+1. **Create Organization:**  
+   Within the `asgard` realm, create a new organization. For example, name it `org-1`.
+
+   ![Create Organization](./docs/create_org.png)
+
+2. **Create User:**  
+   Create a new user in the realm and assign the user to the newly created organization `org-1`.
+
+   ![Create User](./docs/create_user.png)
+
+3. **Set User Credentials:**  
+   Ensure the new user sets secure credentials.
+
+   ![Set User Credentials](./docs/set_user_creds.png)
+
+4. **Assign User to Organization:**  
+   Add the user to the `org-1` organization.
+
+   ![Add User to Organization](./docs/add_user_to_org.png)
+
+> **Note:** The initial setup of Heimdall might take some time as it runs initial migrations.
+
+---
+
+### 4. Run the MCP Inspector
+
+To verify integrations, run the MCP Inspector:
+
+```bash
+npx @modelcontextprotocol/inspector
+```
+
+Then, open the inspector in your browser:
+[http://localhost:6274/](http://localhost:6274/)
+
+---
+
+### 5. Connect to the OdinMCP Server Using the Inspector
+
+Follow these steps to connect to the MCP server for your organization (`org-1`):
+
+1. In the inspector, change the transport type to **SSE**.
+2. Enter the following URL:
+
+   ```
+   http://localhost:8000/api/v1/mcp/org-1/sse
    ```
 
-2. **Start Services:**
-   Use Docker Compose to launch all required services.
-   ```bash
-   docker-compose up
-   ```
+   This URL connects to the `org-1` organization's MCP endpoint and starts streaming events. Make sure to use the correct organization alias.
 
-3. **Run the Inspector:**
-   Execute the MCP inspector to verify integrations.
-   ```bash
-   npx @modelcontextprotocol/inspector
-   ```
+#### Connection Steps
+
+- **Enter SSE Endpoint:**  
+  ![Enter SSE Endpoint](./docs/connect_sse_1.png)
+
+- **Login Prompt:**  
+  ![Login](./docs/connect_sse_2.png)
+
+- **Grant Access to MCP Client:**  
+  ![Grant Access to MCP Client](./docs/connect_sse_3.png)
+
+- **Successful Connection:**  
+  ![Connected](./docs/connect_sse_4.png)
+
+   
 
 ## Roadmap
 
