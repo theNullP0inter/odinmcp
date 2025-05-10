@@ -16,12 +16,13 @@ Asgard is designed as a side project to explore and learn the possibilities of u
   - [Bifrost (API Gateway)](#bifrost-api-gateway)
   - [Hermod (Streaming Reverse Proxy)](#hermod-streaming-reverse-proxy)
   - [OdinMCP](#odinmcp)
+  - [Loki (MCP Inspector)](#loki-mcp-inspector)
 - [How It Works](#how-it-works)
 - [Getting Started with Asgard](#getting-started-with-asgard)
   1. [Setup Environment](#1-setup-environment)
   2. [Start Services](#2-start-services)
   3. [Configure Keycloak](#3-configure-keycloak)
-  4. [Run the MCP Inspector](#4-run-the-mcp-inspector)
+  4. [Open Loki](#4-open-loki)
   5. [Connect to the OdinMCP Server Using the Inspector](#5-connect-to-the-odinmcp-server-using-the-inspector)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
@@ -128,6 +129,17 @@ The overall architecture of Asgard is depicted below:
 - Integrates with authentication (Heimdall/Keycloak), API gateway (Bifrost/Kong), and Hermod/Pushpin for SSE streaming.
 - Coordinates with Odin Workers (Celery) and Redis for background processing and event queuing.
 
+### Loki (MCP Inspector)
+
+- **Purpose:**  
+  Loki hosts the MCP Inspector UI so you can browse and stream events via SSE.
+
+- **Key Features:**  
+  - Bundles `@modelcontextprotocol/inspector` as a Docker service  
+  - Exposes a web UI on port `6274`  
+  - Connects to your org’s SSE endpoint for live event debugging
+
+
 ## How It Works
 
 1. **Authentication:**  
@@ -208,30 +220,35 @@ Keycloak is used as the identity provider. Follow these steps to configure it:
 > **Note:** The initial setup of Heimdall might take some time as it runs initial migrations.
 
 
-### 4. Run the MCP Inspector
 
-To verify integrations, run the MCP Inspector:
+### 4. Open Loki
 
-```bash
-npx @modelcontextprotocol/inspector
-```
+Loki (the MCP Inspector) is now a service in Docker Compose. After `docker-compose up`, open:
 
-Then, open the inspector in your browser:  
-[http://localhost:6274/](http://localhost:6274/)
+http://localhost:6274/
 
 
 ### 5. Connect to the OdinMCP Server Using the Inspector
 
 Follow these steps to connect to the MCP server for your organization (`org-1`):
 
-1. In the inspector, change the transport type to **SSE**.
-2. Enter the following URL:
+1. Open Loki in your browser: `http://localhost:6274/`
+
+2. Change the transport type to **SSE** and enter the following URL:
 
    ```
    http://localhost:8000/api/v1/mcp/org-1/sse
    ```
 
    This URL connects to the `org-1` organization's MCP endpoint and starts streaming events. Make sure to use the correct organization alias.
+
+
+**Note:** If you get an error like below in uyour docker logs for Heimdall:
+```
+heimdall       | 2025-05-10 15:23:17,664 WARN  [org.keycloak.events] (executor-thread-1) type="CLIENT_REGISTER_ERROR", realmId="7a1303f6-e6b0-482c-8135-0efe346054df", realmName="asgard", clientId="null", userId="null", ipAddress="172.21.0.2", error="not_allowed", client_registration_policy="Trusted Hosts"
+```
+
+Add the I.P address of the client( In the error ) to the `trusted_hosts` list in the Keycloak realm settings. This allows the client to register and connect successfully.
 
 #### Connection Steps
 

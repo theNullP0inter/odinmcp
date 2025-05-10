@@ -74,6 +74,19 @@ services:
     # ports:
     #   - 80:80
 
+  loki:
+    image: loki
+    container_name: loki
+    build:
+      context: ./loki
+    restart: always
+    env_file:
+      - ./.env/loki.env
+    network_mode: "host"
+    ports:
+      - 6274:6274
+      - 6277:6277
+
 volumes:
   postgres_db_data: {}
 
