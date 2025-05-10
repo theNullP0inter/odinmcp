@@ -1,19 +1,48 @@
 # Asgard
 
-Asgard is an enterprise-level MCP implementation designed as a side project to explore and learn the possibilities of using MCPs in a distributed environment. This project integrates several open source components to provide authentication, API gateway management, efficient streaming, and a standardized way to connect large language models (LLMs) with data sources.
+Asgard is designed as a side project to explore and learn the possibilities of using MCPs in a distributed environment. This project integrates several open source components to provide authentication, API gateway management, efficient streaming, and a standardized way to connect large language models (LLMs) with data sources.
+
+
+## Table of Contents
+
+- [Overview](#overview)
+- [What is MCP?](#what-is-mcp)
+- [Problem Statement](#problem-statement)
+- [Architecture](#architecture)
+  - [Authentication](#authentication)
+  - [Streaming and Server-Sent Events (SSE)](#streaming-and-server-sent-events-sse)
+- [Services](#services)
+  - [Heimdall (Auth Service)](#heimdall-auth-service)
+  - [Bifrost (API Gateway)](#bifrost-api-gateway)
+  - [Hermod (Streaming Reverse Proxy)](#hermod-streaming-reverse-proxy)
+  - [OdinMCP](#odinmcp)
+- [How It Works](#how-it-works)
+- [Getting Started with Asgard](#getting-started-with-asgard)
+  1. [Setup Environment](#1-setup-environment)
+  2. [Start Services](#2-start-services)
+  3. [Configure Keycloak](#3-configure-keycloak)
+  4. [Run the MCP Inspector](#4-run-the-mcp-inspector)
+  5. [Connect to the OdinMCP Server Using the Inspector](#5-connect-to-the-odinmcp-server-using-the-inspector)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
+- [Acknowledgements](#acknowledgements)
+
 
 ## Overview
 
-Asgard leverages a microservices-based architecture to ensure scalability, resilience, and performance in distributed deployments. This experimental implementation combines the strengths of popular open source tools to deliver a robust distributed application framework.
+Asgard leverages a microservices-based architecture to ensure scalability, resilience, and performance of [Model Context Protocol](https://github.com/modelcontextprotocol/python-sdk) in distributed deployments. This experimental implementation combines the strengths of popular open source tools to deliver a robust distributed application framework.
 
-## What is MCP?
-
-Model Context Protocol (MCP) is an open protocol that standardizes how applications provide context to LLMs. In Asgard, MCP facilitates communication between services and LLMs by offering a standardized channel for context delivery.  
-Learn more about MCP on the [Model Context Protocol Python SDK](https://github.com/modelcontextprotocol/python-sdk).
 
 ## Problem Statement
 
-The goal of Asgard is to address challenges related to securing user authentication, managing client registration and white labelling domains, handling high-demand streaming, and standardizing context communication for LLMs in a distributed ecosystem.
+The goal of Asgard is to address challenges related to:
+
+- Securing user authentication.
+- Managing client registration and white labelling domains.
+- Handling high-demand streaming.
+- Standardizing context communication for LLMs in a distributed ecosystem.
+
 
 ## Architecture
 
@@ -21,7 +50,8 @@ The overall architecture of Asgard is depicted below:
 
 ![Architecture Diagram](./docs/architecture.jpg)
 
-Key components include:
+### Key Components
+
 - **Authentication and Authorization:** Managed via [Keycloak](https://www.keycloak.org) with OIDC protocols.
 - **API Gateway:** Routes incoming requests to the appropriate service using [Kong Gateway](https://konghq.com) with the [Kong OIDC Plugin](https://github.com/revomatico/kong-oidc).
 - **Streaming/SSE:** Handles server-sent events and real-time streaming via [Pushpin](https://pushpin.org) and the [GRIP Protocol](https://pushpin.org/docs/protocols/grip/).
@@ -36,6 +66,7 @@ Key components include:
   1. The Bifrost gateway receives a request and extracts the token.
   2. It exchanges the token with the Heimdall service to validate and obtain user details.
   3. Validated user information is cached in memory and shared with downstream services.
+
 
 ### Streaming and Server-Sent Events (SSE)
 
@@ -62,6 +93,7 @@ Key components include:
   - Integration with Keycloak’s organization management.
   - Centralized client registration.
 
+
 ### Bifrost (API Gateway)
 
 - **Purpose:**  
@@ -71,6 +103,7 @@ Key components include:
   - OIDC-based authentication using Kong's OIDC plugin ([Kong OIDC Plugin](https://github.com/revomatico/kong-oidc)).
   - Efficient routing and redirection of API requests.
   - Seamless integration with backend services.
+
 
 ### Hermod (Streaming Reverse Proxy)
 
@@ -82,15 +115,31 @@ Key components include:
   - Offloads streaming responsibilities from the MCP server and Bifrost.
   - Uses [ZeroMQ](https://zeromq.org) for scalable, distributed deployment.
 
+
 ### OdinMCP
 
-- **Purpose:**  
-  OdinMCP is a basic implementation of an MCP built on [FastAPI](https://fastapi.tiangolo.com) using the mcp Python library. It serves as the foundational control plane for managing interactions among microservices in Asgard.
-  
-- **Key Features:**  
-  - Provides a simple, out-of-the-box MCP setup.
-  - Facilitates context delivery between services and LLMs.
-  - Will later be refactored and extracted into its own client library to further abstract MCP complexities and simplify integrations.
+**OdinMCP** is the core Model Context Protocol (MCP) controller in Asgard, built with [FastAPI](https://fastapi.tiangolo.com) and the [modelcontextprotocol/python-sdk](https://github.com/modelcontextprotocol/python-sdk). It acts as the control plane for managing context delivery, event streaming, and coordination between microservices and LLMs.
+
+#### Key Responsibilities
+
+- Central hub for context communication between services, LLMs, and clients.
+- Provides endpoints for sending, receiving, and streaming context/messages.
+- Handles session management, message publication, and event broadcasting.
+- Integrates with authentication (Heimdall/Keycloak), API gateway (Bifrost/Kong), and Hermod/Pushpin for SSE streaming.
+- Coordinates with Odin Workers (Celery) and Redis for background processing and event queuing.
+
+## How It Works
+
+1. **Authentication:**  
+   Requests are routed through Bifrost, which authenticates via Heimdall and passes user info to OdinMCP.
+2. **Session Management:**  
+   OdinMCP manages per-session context using unique session IDs.
+3. **Messaging:**  
+   Clients use endpoints like `/api/v1/{org_alias}/{session_id}/messages` and `/api/v1/{org_alias}/sse` to send/receive messages and stream events.
+4. **Streaming:**  
+   Real-time events are published to Hermod (Pushpin) for efficient SSE delivery.
+5. **Workers:**  
+   Heavy tasks are processed by Odin Workers (Celery) and results/events are returned via ZeroMQ  to Hermod.
 
 
 
@@ -98,7 +147,6 @@ Key components include:
 
 This guide will walk you through setting up and running Asgard on your local machine.
 
----
 
 ### 1. Setup Environment
 
@@ -108,7 +156,6 @@ Prepare your local environment by running the setup script. This script creates 
 ./setup.sh
 ```
 
----
 
 ### 2. Start Services
 
@@ -118,7 +165,6 @@ Launch all required services using Docker Compose:
 docker-compose up
 ```
 
----
 
 ### 3. Configure Keycloak
 
@@ -161,7 +207,6 @@ Keycloak is used as the identity provider. Follow these steps to configure it:
 
 > **Note:** The initial setup of Heimdall might take some time as it runs initial migrations.
 
----
 
 ### 4. Run the MCP Inspector
 
@@ -171,10 +216,9 @@ To verify integrations, run the MCP Inspector:
 npx @modelcontextprotocol/inspector
 ```
 
-Then, open the inspector in your browser:
+Then, open the inspector in your browser:  
 [http://localhost:6274/](http://localhost:6274/)
 
----
 
 ### 5. Connect to the OdinMCP Server Using the Inspector
 
@@ -203,7 +247,6 @@ Follow these steps to connect to the MCP server for your organization (`org-1`):
 - **Successful Connection:**  
   ![Connected](./docs/connect_sse_4.png)
 
-   
 
 ## Roadmap
 
@@ -211,20 +254,26 @@ Future enhancements for Asgard include:
 
 - ~~**Authentication Enhancements:**  
   Further improvements in auth processes and service integrations.~~
-  
 - **Streaming Improvements:**  
   Optimizing streaming capabilities for additional protocols and higher concurrency.
-  
 - **OdinMCP Python Library:**  
   Refactoring OdinMCP into its own client library to better abstract MCP complexities and simplify integrations.
+
 
 ## Contributing
 
 Contributions to Asgard are welcome! Please open issues, fork the repository, and submit pull requests to help improve functionality and performance.
 
+#### Developer Notes
+- Current implementation is a reference and will be refactored into a standalone library.
+- Strictly follows MCP spec for interoperability.
+- Contributions for new messaging patterns and features are welcome!
+
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
+
 
 ## Acknowledgements
 
