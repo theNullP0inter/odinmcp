@@ -1818,7 +1818,6 @@
             "localhost:8000",
             "http://localhost:8000",
             "http://localhost:6274/",
-            "172.21.0.2",
             "heimdall:8000"
           ],
           "client-uris-must-match": [
