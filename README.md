@@ -252,10 +252,20 @@ Follow these steps to connect to the MCP server for your organization (`org-1`):
 
 Future enhancements for Asgard include:
 
-- ~~**Authentication Enhancements:**  
-  Further improvements in auth processes and service integrations.~~
+- **Authentication Enhancements:**  
+  - ~~Setup heimdall/keycloak with seed config.~~
+  - ~~Setup interface between Heimdall and OdinMCP using OIDC.~~
+  - Setup mcp inspector in docker-compose.
+
 - **Streaming Improvements:**  
-  Optimizing streaming capabilities for additional protocols and higher concurrency.
+  - Setup hermod/pushpin with GRIP protocol.
+  - Setup hermod/pushpin with ZeroMQ.
+  - Setup interface between hermod and OdinMCP using GRIP protocol.
+  - Setup interface between hermod and OdinMCP using ZeroMQ.
+
+- **Build UI for Asgard:**  
+  - Build a simple UI for Asgard to manage organizations, users, and sessions.
+  
 - **OdinMCP Python Library:**  
   Refactoring OdinMCP into its own client library to better abstract MCP complexities and simplify integrations.
 
