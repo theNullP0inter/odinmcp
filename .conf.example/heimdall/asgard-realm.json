@@ -283,16 +283,16 @@
                 "view-users",
                 "view-clients",
                 "impersonation",
-                "view-identity-providers",
                 "query-clients",
+                "view-identity-providers",
                 "manage-clients",
                 "manage-realm",
                 "query-users",
                 "view-authorization",
                 "view-realm",
                 "manage-identity-providers",
-                "manage-users",
                 "manage-events",
+                "manage-users",
                 "manage-authorization",
                 "query-groups"
               ]
@@ -317,6 +317,7 @@
           "attributes": {}
         }
       ],
+      "b5901d49-b731-4ee2-879d-409d78a4a99b": [],
       "account": [
         {
           "id": "89548137-6012-4bf7-b959-f04b971fb6b6",
@@ -758,6 +759,59 @@
         "address",
         "phone",
         "organization",
+        "offline_access",
+        "microprofile-jwt"
+      ]
+    },
+    {
+      "id": "b5901d49-b731-4ee2-879d-409d78a4a99b",
+      "clientId": "b5901d49-b731-4ee2-879d-409d78a4a99b",
+      "name": "MCP Inspector",
+      "baseUrl": "https://github.com/modelcontextprotocol/inspector",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "none",
+      "redirectUris": [
+        "http://localhost:6274/oauth/callback"
+      ],
+      "webOrigins": [
+        "http://localhost:6274"
+      ],
+      "notBefore": 0,
+      "bearerOnly": false,
+      "consentRequired": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "publicClient": true,
+      "frontchannelLogout": false,
+      "protocol": "openid-connect",
+      "attributes": {
+        "realm_client": "false",
+        "oidc.ciba.grant.enabled": "false",
+        "backchannel.logout.session.required": "true",
+        "frontchannel.logout.session.required": "false",
+        "oauth2.device.authorization.grant.enabled": "false",
+        "backchannel.logout.revoke.offline.tokens": "false",
+        "use.refresh.tokens": "true"
+      },
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": false,
+      "nodeReRegistrationTimeout": -1,
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "organization",
+        "profile",
+        "roles",
+        "basic",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
         "offline_access",
         "microprofile-jwt"
       ]
@@ -1813,12 +1867,7 @@
             "true"
           ],
           "trusted-hosts": [
-            "localhost:6274",
-            "localhost",
-            "localhost:8000",
-            "http://localhost:8000",
-            "http://localhost:6274/",
-            "heimdall:8000"
+            "172.21.0.2"
           ],
           "client-uris-must-match": [
             "false"
@@ -1834,6 +1883,10 @@
         "config": {
           "allow-default-scopes": [
             "true"
+          ],
+          "allowed-client-scopes": [
+            "profile",
+            "organization"
           ]
         }
       }
