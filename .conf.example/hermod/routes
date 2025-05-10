@@ -1,0 +1,1 @@
+*,header=X-HERMOD-STREAM:true bifrost:8000,over_http

@@ -1867,7 +1867,8 @@
             "true"
           ],
           "trusted-hosts": [
-            "172.21.0.2"
+            "172.21.0.2",
+            "172.21.0.3"
           ],
           "client-uris-must-match": [
             "false"
