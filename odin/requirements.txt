@@ -10,7 +10,7 @@ httpcore==1.0.8
 httpx==0.28.1
 httpx-sse==0.4.0
 idna==3.10
-mcp==1.8.0
+mcp==1.9.0
 pycparser==2.22
 pydantic==2.11.3
 pydantic-settings==2.8.1
