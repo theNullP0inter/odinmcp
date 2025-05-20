@@ -5,9 +5,11 @@ from starlette.middleware import Middleware
 
 from core.config import settings
 from web.middlewares.heimdall import CurrentUserMiddleware
+from web.middlewares.hermod import HermodStreamingMiddleware
 
 MIDDLEWARE = [
     Middleware(BaseHTTPMiddleware, dispatch=CurrentUserMiddleware()),
+    Middleware(BaseHTTPMiddleware, dispatch=HermodStreamingMiddleware())
 ]
 
 app = FastAPI(
@@ -20,6 +22,7 @@ app = FastAPI(
 )
 
 mcp = OdinMCP("Odin MCP", debug=settings.DEBUG)
+
 
 
 app.mount(

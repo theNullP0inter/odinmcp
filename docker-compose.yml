@@ -68,7 +68,7 @@ services:
       - ./.conf/hermod:/etc/pushpin
     ports:
       - 7999:7999
-      # - 5561:5561 # Only to publish
+      - 5561:5561 # Only to publish
     
   odin:
     image: odin

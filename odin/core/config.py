@@ -4,8 +4,8 @@ from typing import List
 
 
 class Settings(BaseSettings):
-    CORS_WHITELIST: List[str]
-    ALLOWED_HOSTS: List[str]
+
+
     ENV: str
     DEBUG: bool
     ROOT_PATH: str = "/"
