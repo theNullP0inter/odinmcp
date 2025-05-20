@@ -12,8 +12,18 @@ class OdenSettings(BaseSettings, Generic[LifespanResultT]):
         nested_model_default_partial_update=True,
         extra="ignore",
     )
+    
+    
+    # debugging
     debug: Optional[bool] = False
+    
+    # routing
     path_prefix: Optional[str] = "mcp"
     organization_path_param: Optional[str] = "org_code"
     
+    
+    # authentication
+    user_info_token: Optional[str] = "x-userinfo"
+    hermod_streaming_header: Optional[str] = "x-hermod-stream"
 
+settings = OdenSettings()

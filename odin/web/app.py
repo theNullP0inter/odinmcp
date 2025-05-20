@@ -14,7 +14,11 @@ app = FastAPI(
     redoc_url="/redoc/",
 )
 
-mcp = OdinMCP("Odin MCP", "easy way to fetch all your data", debug=settings.DEBUG)
+mcp = OdinMCP(
+    "Odin MCP", 
+    "easy way to fetch all your data"
+)
+
 
 
 

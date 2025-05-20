@@ -24,7 +24,7 @@ from starlette.middleware import Middleware
 
 from odinmcp.server.middleware.heimdall import CurrentUserMiddleware
 from odinmcp.server.middleware.hermod import HermodStreamingMiddleware
-from odinmcp.server.settings import OdenSettings
+from odinmcp.server.config import settings
 
 
 #  Header names
@@ -59,7 +59,6 @@ class OdinMCP:
         name: str,
         instructions: str,
         version: str | None = None,
-        **settings: Any,
     ):  
         self._mcp_server = MCPServer(
             name=name,
@@ -95,23 +94,8 @@ class OdinMCP:
                 instructions=self._mcp_server.instructions,
                 meta={},
         )
-        self.settings = OdenSettings(**settings)
     
-    @staticmethod
-    def check_user_access(request: Request, org_code: str)->User:
-        user: User = request.state.user
-        if not user:
-            raise HTTPException(status_code=401, detail='Unauthorized')
-        
-        if org_code not in user.organizations:
-            # NOTE: ideally should be 403 but raising a 401 to restart the login flow
-            raise HTTPException(status_code=401, detail='Forbidden. User does not have access to this organization')
-        
-        # TODO: if the channel_id already exists, check if the user is the same
-        
-        
-        return user
-
+    
     def _create_error_response(
         self,
         error_message: str,
@@ -161,8 +145,7 @@ class OdinMCP:
         
         
         async def handle_request(request: Request) -> Response:
-            org = request.path_params[self.settings.organization_path_param]
-            self.check_user_access(request, org)
+            org = request.path_params[settings.organization_path_param]
             channel_id = request.headers.get(MCP_SESSION_ID_HEADER) or str(uuid4())
 
             meth = request.method.upper()
@@ -179,12 +162,17 @@ class OdinMCP:
 
         
         mcp_app = Starlette(
-            debug=self.settings.debug,
+            debug=settings.debug,
             routes=[
-                Route( f"/{ '{'+ self.settings.organization_path_param + '}' }", endpoint=handle_request, methods=["GET", "POST", "DELETE"]),
+                Route( 
+                "/{"+settings.organization_path_param +"}", 
+                endpoint=handle_request, 
+                methods=["GET", "POST", "DELETE"],
+                middleware=MIDDLEWARE,
+                ),
             ],
-            middleware=MIDDLEWARE,
         )
+        
         
         return mcp_app
         
