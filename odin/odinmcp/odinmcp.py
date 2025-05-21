@@ -91,6 +91,11 @@ class OdinMCP:
                 meta={},
         )
     
+    @staticmethod
+    def supports_hermod_streaming(request: Request) -> bool:
+        # pull the flag off State (defaults to False if unset)
+        return getattr(request.state, settings.supports_hermod_streaming_state, False)
+    
     
     def _create_error_response(
         self,
@@ -199,7 +204,15 @@ class OdinMCP:
         
 
     async def _handle_get(self, request: Request, channel_id: str) -> Response:
-        #TODO: if supports streaming, return a streaming hold response. else Not Acceptable
+        
+        if not self.supports_hermod_streaming(request):
+            logger.info(f"Client rejected for session {channel_id}, bad Accept header: {request.headers.get(ACCEPT_HEADER)}")
+            return self._create_error_response(
+                error_message="Client must accept application/json or text/event-stream",
+                status_code=HTTPStatus.NOT_ACCEPTABLE, # 406
+                headers={MCP_SESSION_ID_HEADER: channel_id},
+                error_code=INVALID_REQUEST
+            )
         return self._create_streaming_hold_response(
             channel_id=channel_id,
         )
@@ -254,32 +267,40 @@ class OdinMCP:
                 jsonrpc=message.root.jsonrpc or "2.0" 
             )
             
-            res =  self._create_json_response(
+            return self._create_json_response(
                 response_message,
                 status_code=HTTPStatus.OK,
                 headers={MCP_SESSION_ID_HEADER: channel_id},
             )
             
-            return res
             
         elif isinstance(message.root, JSONRPCRequest):
             # TODO: trigger tasks -> requests that are not initialize
             pass
-        else:
+        elif isinstance(message.root, JSONRPCNotification):
             
-            # TODO: Handle other JSONRPC messages (non-initialize POST)
-            # if message.root.method == "notifications/initialized" and supports streaming
-                # logger.info(f"Received non-initialize JSONRPC message on session {channel_id}: {message.model_dump_json(exclude_none=True)}")
-                # res = self._create_streaming_hold_response(
-                #     channel_id=channel_id,
-                # )
-                # return res
-            # else:
+            if message.root.method == "notifications/initialized" and self.supports_hermod_streaming(request):
+                res = self._create_streaming_hold_response(
+                    channel_id=channel_id,
+                )
+            else:
                 #  send 202 json response
-                
+                res = self._create_json_response(
+                    response_message=None,
+                    status_code=HTTPStatus.ACCEPTED,
+                    headers={MCP_SESSION_ID_HEADER: channel_id},
+                )
+
             # TODO: trigger tasks for non-initialize notifications
-            
-            pass
+            return res            
+        else:
+            logger.warning(f"Received an unknown message type for session {channel_id}: {message.root}")
+            return self._create_error_response(
+                error_message="Invalid Request: The JSON sent is not a valid Request object.",
+                status_code=HTTPStatus.BAD_REQUEST, # 400
+                headers={MCP_SESSION_ID_HEADER: channel_id},
+                error_code=INVALID_REQUEST # Or INVALID_PARAMS if structure is okay but content is bad
+            )
             
             
             
