@@ -262,7 +262,11 @@ class OdinMCP:
             
             return res
             
-        elif isinstance(message.root, JSONRPCResponse) or isinstance(message.root, JSONRPCNotification):
+        elif isinstance(message.root, JSONRPCRequest):
+            # TODO: trigger tasks -> requests that are not initialize
+            pass
+        else:
+            
             # TODO: Handle other JSONRPC messages (non-initialize POST)
             # if message.root.method == "notifications/initialized" and supports streaming
                 # logger.info(f"Received non-initialize JSONRPC message on session {channel_id}: {message.model_dump_json(exclude_none=True)}")
@@ -273,14 +277,11 @@ class OdinMCP:
             # else:
                 #  send 202 json response
                 
-            
-            # TODO: trigger tasks -> 
+            # TODO: trigger tasks for non-initialize notifications
             
             pass
-        else:
-            pass
             
-            # TODO: trigger tasks -> requests that are not initialize
+            
             
             
             
