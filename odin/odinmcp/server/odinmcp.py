@@ -25,22 +25,16 @@ from starlette.middleware import Middleware
 from odinmcp.server.middleware.heimdall import CurrentUserMiddleware
 from odinmcp.server.middleware.hermod import HermodStreamingMiddleware
 from odinmcp.server.config import settings
+from odinmcp.server.constants import (
+    MCP_SESSION_ID_HEADER,
+    LAST_EVENT_ID_HEADER,
+    CONTENT_TYPE_HEADER,
+    ACCEPT_HEADER,
+    CONTENT_TYPE_JSON,
+    CONTENT_TYPE_SSE,
+)
 
 
-#  Header names
-MCP_SESSION_ID_HEADER = "mcp-session-id"
-LAST_EVENT_ID_HEADER = "last-event-id"
-CONTENT_TYPE_HEADER = "content-type"
-ACCEPT_HEADER = "Accept"
-
-
-# Content types
-CONTENT_TYPE_JSON = "application/json"
-CONTENT_TYPE_SSE = "text/event-stream"
-
-
-# JSON = "application/json" # Redundant with CONTENT_TYPE_JSON
-# SSE = "text/event-stream"  # Redundant with CONTENT_TYPE_SSE
 
 MIDDLEWARE = [
     Middleware(BaseHTTPMiddleware, dispatch=CurrentUserMiddleware()),
@@ -188,31 +182,8 @@ class OdinMCP:
         )
 
     async def _handle_post(self, request: Request, channel_id: str) -> Response:
-        # 1. Not Acceptable: Client must accept both application/json and text/event-stream
-        accept_header = request.headers.get(ACCEPT_HEADER, "")
-        if not (CONTENT_TYPE_JSON in accept_header and CONTENT_TYPE_SSE in accept_header):
-            logger.warning(
-                f"Client rejected for session {channel_id}, bad Accept header: {accept_header}. Does not contain {CONTENT_TYPE_JSON} and {CONTENT_TYPE_SSE}"
-            )
-            return self._create_error_response(
-                error_message=f"Client must accept both {CONTENT_TYPE_JSON} and {CONTENT_TYPE_SSE}",
-                status_code=HTTPStatus.NOT_ACCEPTABLE,
-                headers={MCP_SESSION_ID_HEADER: channel_id},
-                error_code=INVALID_REQUEST
-            )
-
-        # 3. if content-type is not json return
-        content_type_header = request.headers.get(CONTENT_TYPE_HEADER, "")
-        if CONTENT_TYPE_JSON not in content_type_header:
-            logger.warning(f"Client rejected for session {channel_id}, bad Content-Type header: {content_type_header}")
-            return self._create_error_response(
-                error_message=f"Content-Type must be {CONTENT_TYPE_JSON}",
-                status_code=HTTPStatus.UNSUPPORTED_MEDIA_TYPE, # 415
-                headers={MCP_SESSION_ID_HEADER: channel_id},
-                error_code=INVALID_REQUEST
-            )
-
-        # 4: try to parse the request body as JSON. except and handle
+        
+        # 1: try to parse the request body as JSON. except and handle
         try:
             body = await request.body()
             if not body:
@@ -234,7 +205,7 @@ class OdinMCP:
                 error_code=PARSE_ERROR
             )
 
-        # 5. should be JSONRPCMessage
+        # 2. should be JSONRPCMessage
         try:
             message = JSONRPCMessage.model_validate(json_data)
             
@@ -247,7 +218,7 @@ class OdinMCP:
                 error_code=INVALID_REQUEST # Or INVALID_PARAMS if structure is okay but content is bad
             )
 
-        # 6. check if initialize request
+        # 3. check if initialize request
         if isinstance(message.root, JSONRPCRequest) and message.root.method == "initialize":
             req_id = message.root.id
             
@@ -272,6 +243,7 @@ class OdinMCP:
         else:
             # Handle other JSONRPC messages (non-initialize POST)
             logger.info(f"Received non-initialize JSONRPC message on session {channel_id}: {message.model_dump_json(exclude_none=True)}")
+            
             
             
 
