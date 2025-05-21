@@ -2,9 +2,9 @@ import base64
 import json
 from typing import Type
 from starlette.exceptions import HTTPException
-from models.user import User
+from odinmcp.models.user import User
 from monitors.logging import logger
-from odinmcp.server.config import settings
+from odinmcp.config import settings
 from starlette.requests import Request
 
 

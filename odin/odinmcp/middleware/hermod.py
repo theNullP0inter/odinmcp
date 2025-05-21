@@ -1,13 +1,13 @@
 import logging
 from starlette.exceptions import HTTPException
-from odinmcp.server.config import settings
+from odinmcp.config import settings
 from mcp.types import (
     JSONRPCMessage, JSONRPCResponse, InitializeResult, JSONRPCRequest,
     JSONRPCError, ErrorData, PARSE_ERROR, INVALID_REQUEST, INVALID_PARAMS,
     INTERNAL_ERROR, LATEST_PROTOCOL_VERSION, LoggingCapability,
     PromptsCapability, ResourcesCapability, ToolsCapability,
 )
-from odinmcp.server.constants import (
+from odinmcp.constants import (
     MCP_SESSION_ID_HEADER,
     LAST_EVENT_ID_HEADER,
     CONTENT_TYPE_HEADER,

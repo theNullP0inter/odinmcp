@@ -1,5 +1,5 @@
 from fastapi import Depends, FastAPI, Request
-from odinmcp.server.odinmcp import OdinMCP
+from odinmcp.odinmcp import OdinMCP
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware import Middleware
 

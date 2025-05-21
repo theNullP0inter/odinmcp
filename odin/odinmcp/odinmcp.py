@@ -12,7 +12,6 @@ from starlette.exceptions import HTTPException
 from starlette.types import Receive, Scope, Send
 from mcp.types import JSONRPCMessage, JSONRPCResponse, InitializeResult, JSONRPCRequest, JSONRPCError, ErrorData, PARSE_ERROR, INVALID_REQUEST, INVALID_PARAMS, INTERNAL_ERROR, LATEST_PROTOCOL_VERSION, LoggingCapability, PromptsCapability, ResourcesCapability, ToolsCapability
 from monitors.logging import logger
-from models.user import User
 # from core.config import settings # Assuming settings might be used elsewhere or was a previous import
 from mcp.server.lowlevel.server import Server as MCPServer, NotificationOptions
 # from mcp.types import InitializeResult, JSONRPCRequest, JSONRPCResponse # Duplicate, covered above
@@ -22,10 +21,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware import Middleware
 
-from odinmcp.server.middleware.heimdall import CurrentUserMiddleware
-from odinmcp.server.middleware.hermod import HermodStreamingMiddleware
-from odinmcp.server.config import settings
-from odinmcp.server.constants import (
+from odinmcp.middleware.heimdall import CurrentUserMiddleware
+from odinmcp.middleware.hermod import HermodStreamingMiddleware
+from odinmcp.config import settings
+from odinmcp.constants import (
     MCP_SESSION_ID_HEADER,
     LAST_EVENT_ID_HEADER,
     CONTENT_TYPE_HEADER,
@@ -133,6 +132,8 @@ class OdinMCP:
             status_code=status_code,
             headers=response_headers,
         )
+        
+    # TODO: _create_streaming_response
     
     
     def app(self ) -> Starlette:
@@ -243,6 +244,9 @@ class OdinMCP:
         else:
             # Handle other JSONRPC messages (non-initialize POST)
             logger.info(f"Received non-initialize JSONRPC message on session {channel_id}: {message.model_dump_json(exclude_none=True)}")
+            
+            # TODO: handle notifications initialize -> send grip headers
+            
             
             
             
