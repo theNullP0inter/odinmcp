@@ -10,7 +10,7 @@ from starlette.responses import Response
 from starlette.routing import Mount, Route
 from starlette.exceptions import HTTPException
 from starlette.types import Receive, Scope, Send
-from mcp.types import JSONRPCMessage, JSONRPCResponse, InitializeResult, JSONRPCRequest, JSONRPCError, ErrorData, PARSE_ERROR, INVALID_REQUEST, INVALID_PARAMS, INTERNAL_ERROR, LATEST_PROTOCOL_VERSION, LoggingCapability, PromptsCapability, ResourcesCapability, ToolsCapability
+from mcp.types import JSONRPCMessage, JSONRPCResponse, InitializeResult, JSONRPCRequest, JSONRPCError, ErrorData, PARSE_ERROR, INVALID_REQUEST, INVALID_PARAMS, INTERNAL_ERROR, LATEST_PROTOCOL_VERSION, LoggingCapability, PromptsCapability, ResourcesCapability, ToolsCapability, JSONRPCNotification
 from monitors.logging import logger
 # from core.config import settings # Assuming settings might be used elsewhere or was a previous import
 from mcp.server.lowlevel.server import Server as MCPServer, NotificationOptions
@@ -199,6 +199,7 @@ class OdinMCP:
         
 
     async def _handle_get(self, request: Request, channel_id: str) -> Response:
+        #TODO: if supports streaming, return a streaming hold response. else Not Acceptable
         return self._create_streaming_hold_response(
             channel_id=channel_id,
         )
@@ -261,15 +262,25 @@ class OdinMCP:
             
             return res
             
-        else:
-            # Handle other JSONRPC messages (non-initialize POST)
-            logger.info(f"Received non-initialize JSONRPC message on session {channel_id}: {message.model_dump_json(exclude_none=True)}")
-            res = self._create_streaming_hold_response(
-                channel_id=channel_id,
-            )
+        elif isinstance(message.root, JSONRPCResponse) or isinstance(message.root, JSONRPCNotification):
+            # TODO: Handle other JSONRPC messages (non-initialize POST)
+            # if message.root.method == "notifications/initialized" and supports streaming
+                # logger.info(f"Received non-initialize JSONRPC message on session {channel_id}: {message.model_dump_json(exclude_none=True)}")
+                # res = self._create_streaming_hold_response(
+                #     channel_id=channel_id,
+                # )
+                # return res
+            # else:
+                #  send 202 json response
+                
             
-            # TODO: handle notifications initialize -> send grip headers & create task
-            return res
+            # TODO: trigger tasks -> 
+            
+            pass
+        else:
+            pass
+            
+            # TODO: trigger tasks -> requests that are not initialize
             
             
             
