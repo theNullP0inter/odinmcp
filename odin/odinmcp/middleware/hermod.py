@@ -1,5 +1,6 @@
 import logging
 from starlette.exceptions import HTTPException
+from starlette.requests import Request
 from odinmcp.config import settings
 from mcp.types import (
     JSONRPCMessage, JSONRPCResponse, InitializeResult, JSONRPCRequest,
@@ -22,7 +23,7 @@ from http import HTTPStatus
 logger = logging.getLogger(__name__)
 
 class HermodStreamingMiddleware:
-    async def __call__(self, request, call_next):
+    async def __call__(self, request: Request, call_next):
         # existing hermod bypass
         supports_hermod_streaming = (request.headers.get(settings.hermod_streaming_header, "false") == "true")
         
@@ -34,7 +35,7 @@ class HermodStreamingMiddleware:
         elif supports_hermod_streaming and CONTENT_TYPE_JSON in accept_hdr:
             supports_hermod_streaming = True
             
-        request.state.supports_hermod_streaming = supports_hermod_streaming
+        setattr(request.state, settings.supports_hermod_streaming_state, supports_hermod_streaming)
         # new checks:
         channel_id = request.headers.get(MCP_SESSION_ID_HEADER)
         

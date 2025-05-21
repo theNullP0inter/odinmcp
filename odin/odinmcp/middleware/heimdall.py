@@ -33,6 +33,6 @@ class HeimdallCurrentUserMiddleware:
             # NOTE: ideally should be 403 but raising a 401 to restart the login flow
             raise HTTPException(status_code=401, detail='Forbidden. User does not have access to this organization')
         
-        request.state.current_user = user
+        setattr(request.state, settings.current_user_state, user)
         response = await call_next(request)
         return response

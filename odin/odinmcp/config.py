@@ -25,5 +25,10 @@ class OdenSettings(BaseSettings, Generic[LifespanResultT]):
     # authentication
     user_info_token: Optional[str] = "x-userinfo"
     hermod_streaming_header: Optional[str] = "x-hermod-stream"
+    
+    
+    # state variables
+    current_user_state: Optional[str] = "current_user"
+    supports_hermod_streaming_state: Optional[str] = "supports_hermod_streaming"
 
 settings = OdenSettings()
