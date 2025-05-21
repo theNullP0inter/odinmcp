@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Any, Dict, List
 
 class Organization(BaseModel):
@@ -6,13 +6,14 @@ class Organization(BaseModel):
     organization_code: str
 
 
-class User(BaseModel):
+class CurrentUser(BaseModel):
     user_id:str
     name: str
     email:str
     name: str
     organizations: Dict[str, Organization]
-
+    session_id: str = Field(..., alias="sid")
+    
     class Config:
         arbitrary_types_allowed = True
 

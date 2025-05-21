@@ -21,7 +21,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware import Middleware
 
-from odinmcp.middleware.heimdall import CurrentUserMiddleware
+from odinmcp.middleware.heimdall import HeimdallCurrentUserMiddleware
 from odinmcp.middleware.hermod import HermodStreamingMiddleware
 from odinmcp.config import settings
 from odinmcp.constants import (
@@ -31,12 +31,15 @@ from odinmcp.constants import (
     ACCEPT_HEADER,
     CONTENT_TYPE_JSON,
     CONTENT_TYPE_SSE,
+    HERMOD_GRIP_HOLD_HEADER,
+    HERMOD_GRIP_HOLD_MODE,
+    HERMOD_GRIP_CHANNEL_HEADER
 )
 
 
 
 MIDDLEWARE = [
-    Middleware(BaseHTTPMiddleware, dispatch=CurrentUserMiddleware()),
+    Middleware(BaseHTTPMiddleware, dispatch=HeimdallCurrentUserMiddleware()),
     Middleware(BaseHTTPMiddleware, dispatch=HermodStreamingMiddleware())
 ]
 
@@ -133,14 +136,37 @@ class OdinMCP:
             headers=response_headers,
         )
         
-    # TODO: _create_streaming_response
+    def _create_streaming_hold_response(
+        self,
+        channel_id: str,
+        status_code: HTTPStatus = HTTPStatus.ACCEPTED,
+        headers: dict[str, str] | None = None,
+    ) -> Response:
+        """Create a streaming hold response"""
+        response_headers = {
+            CONTENT_TYPE_HEADER: CONTENT_TYPE_SSE, 
+            HERMOD_GRIP_HOLD_HEADER: HERMOD_GRIP_HOLD_MODE,
+            HERMOD_GRIP_CHANNEL_HEADER: channel_id,
+            MCP_SESSION_ID_HEADER: channel_id,
+            ACCEPT_HEADER: CONTENT_TYPE_JSON,
+        }
+        # TODO: generate channel id
+        # TODO: keep-alive headers
+        if headers:
+            response_headers.update(headers)
+        logger.info(f"Creating streaming hold response with headers: {response_headers}")
+        return Response(
+            content=None,
+            status_code=status_code,
+            headers=response_headers,
+        )
     
     
     def app(self ) -> Starlette:
         
         
         async def handle_request(request: Request) -> Response:
-            org = request.path_params[settings.organization_path_param]
+            
             channel_id = request.headers.get(MCP_SESSION_ID_HEADER) or str(uuid4())
 
             meth = request.method.upper()
@@ -173,14 +199,11 @@ class OdinMCP:
         
 
     async def _handle_get(self, request: Request, channel_id: str) -> Response:
-        # TODO: handle GET request. start streaming.
-        logger.info(f"GET request received for channel_id: {channel_id}. Not yet implemented.")
-        return self._create_error_response(
-            error_message="Method Not Allowed. This endpoint is for MCP POST requests or future GET streaming.",
-            status_code=HTTPStatus.METHOD_NOT_ALLOWED,
-            headers={MCP_SESSION_ID_HEADER: channel_id},
-            error_code=INTERNAL_ERROR # Or a more specific code if available
+        return self._create_streaming_hold_response(
+            channel_id=channel_id,
         )
+        
+        
 
     async def _handle_post(self, request: Request, channel_id: str) -> Response:
         
@@ -235,17 +258,20 @@ class OdinMCP:
                 status_code=HTTPStatus.OK,
                 headers={MCP_SESSION_ID_HEADER: channel_id},
             )
-            logger.info(f"Successful 'initialize' request for session {channel_id}.")
-            logger.info(
-                f"Response: {response_message.model_dump_json(exclude_none=True)}"
-            )
+            
             return res
             
         else:
             # Handle other JSONRPC messages (non-initialize POST)
             logger.info(f"Received non-initialize JSONRPC message on session {channel_id}: {message.model_dump_json(exclude_none=True)}")
+            res = self._create_streaming_hold_response(
+                channel_id=channel_id,
+            )
             
-            # TODO: handle notifications initialize -> send grip headers
+            # TODO: handle notifications initialize -> send grip headers & create task
+            return res
+            
+            
             
             
             
