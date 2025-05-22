@@ -92,7 +92,7 @@ services:
   odin_worker:
     image: odin
     container_name: odin_worker
-    entrypoint: celery -A main.celery worker
+    entrypoint: watchmedo auto-restart --directory=/app --pattern=*.py --recursive -- celery -A main.celery worker
     build:
       context: ./odin
     restart: always
@@ -118,6 +118,11 @@ services:
     ports:
       - 6274:6274
       - 6277:6277
+
+  redis:
+    image: redis:7
+    networks:
+      - asgard_net
   
   
 

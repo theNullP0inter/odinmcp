@@ -28,5 +28,9 @@ class OdenSettings(BaseSettings, Generic[LifespanResultT]):
     # state variables
     current_user_state: Optional[str] = "current_user"
     supports_hermod_streaming_state: Optional[str] = "supports_hermod_streaming"
-
+    
+    # celery settngs
+    celery_broker: str
+    celery_backend: str
+    
 settings = OdenSettings()
