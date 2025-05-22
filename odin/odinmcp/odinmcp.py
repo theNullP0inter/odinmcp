@@ -21,7 +21,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware import Middleware
 
-from odinmcp.models.user import CurrentUser
+from odin.odinmcp.models.auth import CurrentUser
 from odinmcp.middleware.heimdall import HeimdallCurrentUserMiddleware
 from odinmcp.middleware.hermod import HermodStreamingMiddleware
 from odinmcp.config import settings

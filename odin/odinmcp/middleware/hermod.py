@@ -1,7 +1,7 @@
 import logging
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
-from odinmcp.models.user import CurrentUser
+from odin.odinmcp.models.auth import CurrentUser
 from odinmcp.config import settings
 from mcp.types import (
     JSONRPCMessage, JSONRPCResponse, InitializeResult, JSONRPCRequest,
