@@ -41,94 +41,67 @@ from odinmcp.constants import (
 class OdinWeb:
     def __init__(
         self,
-        mcp_server: MCPServer,  
+        mcp_initialize_result: InitializeResult,
+        request: Request  
     ):
-        mcp_initialization_options = mcp_server.create_initialization_options(
-            notification_options=NotificationOptions(),
-            experimental_capabilities={},
-        )
         
-        # TODO: Remove the capability manipulation once server is fully implemented
-        #  Note: this is a placeholder for the actual settings to make it work with the mcp-inspector
-        #  store self._mcp_server.create_initialization_options() for cache
-        
-        mcp_initialization_options.capabilities.logging = LoggingCapability()
-        mcp_initialization_options.capabilities.prompts = PromptsCapability(
-            listChanged=True,
-        )
-        mcp_initialization_options.capabilities.resources = ResourcesCapability(
-            subscribe=True,
-            listChanged=True,
-        )
-        mcp_initialization_options.capabilities.tools = ToolsCapability(
-            listChanged=True,
-        )
-        
-        self.mcp_initialize_result = InitializeResult(
-                protocolVersion=LATEST_PROTOCOL_VERSION,
-                capabilities=mcp_initialization_options.capabilities,
-                serverInfo={ 
-                    "name": mcp_initialization_options.server_name,
-                    "version": mcp_initialization_options.server_version,
-                },
-                instructions=mcp_server.instructions,
-                meta={},
-        )
+        self.mcp_initialize_result = mcp_initialize_result
+        self.request = request
+        self.supports_hermod_streaming = getattr(request.state, settings.supports_hermod_streaming_state, False)
+        self.current_user = getattr(request.state, settings.current_user_state, None)
+        self.channel_id = self.request.headers.get(MCP_SESSION_ID_HEADER) or self.create_new_user_channel()
         
         
-    async def handle_request(self, request: Request) -> Response:
-        channel_id = request.headers.get(MCP_SESSION_ID_HEADER) or str(uuid4())
-
-        method = request.method.upper()
+        
+        
+        
+    async def get_response(self) -> Response:
+        
+        method = self.request.method.upper()
         if method == "GET":
-            return await self._handle_get(request, channel_id) # -> Needs a validated session
+            return await self._handle_get() # -> Needs a validated session
         elif method == "POST":
-            return await self._handle_post(request, channel_id) # -> Needs a validated session. Doesnt need for initialize
+            return await self._handle_post() # -> Needs a validated session. Doesnt need for initialize
         elif method == "DELETE":
-            return await self._handle_delete(request, channel_id) # -> Needs a validated session
+            return await self._handle_delete() # -> Needs a validated session
         else:
             # For Method Not Allowed, a simple HTTP response is fine,
             # but if you want JSON-RPC, you could use _create_error_response
             raise HTTPException(status_code=HTTPStatus.METHOD_NOT_ALLOWED, detail="Method not allowed")
     
     
-    async def _handle_get(self, request: Request, channel_id: str) -> Response:
+    async def _handle_get(self ) -> Response:
         
-        if not self.supports_hermod_streaming(request):
-            logger.info(f"Client rejected for session {channel_id}, bad Accept header: {request.headers.get(ACCEPT_HEADER)}")
+        if not self.supports_hermod_streaming:
+            
             return self._create_error_response(
                 error_message="Client must accept application/json or text/event-stream",
                 status_code=HTTPStatus.NOT_ACCEPTABLE, # 406
-                headers={MCP_SESSION_ID_HEADER: channel_id},
                 error_code=INVALID_REQUEST
             )
-        return self._create_streaming_hold_response(
-            channel_id=channel_id,
-        )
+        return self._create_streaming_hold_response()
         
         
 
-    async def _handle_post(self, request: Request, channel_id: str) -> Response:
+    async def _handle_post(self) -> Response:
         
         # 1: try to parse the request body as JSON. except and handle
         try:
-            body = await request.body()
+            body = await self.request.body()
             if not body:
-                logger.warning(f"Client sent an empty POST request body for session {channel_id}.")
+
                 return self._create_error_response(
                     error_message="Request body cannot be empty for POST.",
                     status_code=HTTPStatus.BAD_REQUEST, # 400
-                    headers={MCP_SESSION_ID_HEADER: channel_id},
                     error_code=INVALID_REQUEST
                 )
             json_data = json.loads(body)
 
         except json.JSONDecodeError as e:
-            logger.warning(f"Failed to parse JSON body for session {channel_id}: {e}")
+            
             return self._create_error_response(
                 error_message="Parse error: Invalid JSON was received by the server.",
                 status_code=HTTPStatus.BAD_REQUEST, # 400
-                headers={MCP_SESSION_ID_HEADER: channel_id},
                 error_code=PARSE_ERROR
             )
 
@@ -137,11 +110,9 @@ class OdinWeb:
             message = JSONRPCMessage.model_validate(json_data)
             
         except Exception as e:  
-            logger.warning(f"Failed to validate JSONRPCMessage for session {channel_id}: {e}. Data: {json_data}")
             return self._create_error_response(
                 error_message="Invalid Request: The JSON sent is not a valid Request object.",
                 status_code=HTTPStatus.BAD_REQUEST, # 400
-                headers={MCP_SESSION_ID_HEADER: channel_id},
                 error_code=INVALID_REQUEST # Or INVALID_PARAMS if structure is okay but content is bad
             )
 
@@ -149,7 +120,6 @@ class OdinWeb:
         if isinstance(message.root, JSONRPCRequest) and message.root.method == "initialize":
             req_id = message.root.id
             
-        
             response_message = JSONRPCResponse(
                 id=req_id,
                 result=self.mcp_initialize_result.model_dump(),
@@ -159,7 +129,6 @@ class OdinWeb:
             return self._create_json_response(
                 response_message,
                 status_code=HTTPStatus.OK,
-                headers={MCP_SESSION_ID_HEADER: channel_id},
             )
             
             
@@ -168,36 +137,31 @@ class OdinWeb:
             pass
         elif isinstance(message.root, JSONRPCNotification):
             
-            if message.root.method == "notifications/initialized" and self.supports_hermod_streaming(request):
-                res = self._create_streaming_hold_response(
-                    channel_id=channel_id,
-                )
+            if message.root.method == "notifications/initialized" and self.supports_hermod_streaming:
+                res = self._create_streaming_hold_response()
             else:
                 #  send 202 json response
                 res = self._create_json_response(
                     response_message=None,
                     status_code=HTTPStatus.ACCEPTED,
-                    headers={MCP_SESSION_ID_HEADER: channel_id},
                 )
 
             # TODO: trigger tasks for non-initialize notifications
             return res            
         else:
-            logger.warning(f"Received an unknown message type for session {channel_id}: {message.root}")
             return self._create_error_response(
                 error_message="Invalid Request: The JSON sent is not a valid Request object.",
                 status_code=HTTPStatus.BAD_REQUEST, # 400
-                headers={MCP_SESSION_ID_HEADER: channel_id},
                 error_code=INVALID_REQUEST # Or INVALID_PARAMS if structure is okay but content is bad
             )
             
             
-                   
-
-    async def _handle_delete(self, request: Request, channel_id: str) -> Response:
+    async def _handle_delete(self) -> Response:
         # TODO: handle DELETE request. terminate session.
-        logger.info(f"DELETE request received for session {channel_id}. Terminating session.")
-        return Response(status_code=HTTPStatus.NO_CONTENT, headers={MCP_SESSION_ID_HEADER: channel_id})
+        return self._create_json_response(
+            response_message=None,
+            status_code=HTTPStatus.OK
+        )
 
 
     
@@ -209,7 +173,10 @@ class OdinWeb:
         headers: dict[str, str] | None = None,
     ) -> Response:
         """Create a JSON-RPC error response."""
-        response_headers = {CONTENT_TYPE_HEADER: CONTENT_TYPE_JSON}
+        response_headers = {
+            CONTENT_TYPE_HEADER: CONTENT_TYPE_JSON,
+            MCP_SESSION_ID_HEADER: self.channel_id,
+        }
         if headers:
             response_headers.update(headers)
 
@@ -233,7 +200,10 @@ class OdinWeb:
         headers: dict[str, str] | None = None,
     ) -> Response:
         """Create a JSON response from a JSONRPCMessage"""
-        response_headers = {CONTENT_TYPE_HEADER: CONTENT_TYPE_JSON}
+        response_headers = {
+            CONTENT_TYPE_HEADER: CONTENT_TYPE_JSON,
+            MCP_SESSION_ID_HEADER: self.channel_id,
+        }
         if headers:
             response_headers.update(headers)
         logger.info(f"Creating JSON response with headers: {response_headers}")
@@ -247,7 +217,6 @@ class OdinWeb:
         
     def _create_streaming_hold_response(
         self,
-        channel_id: str,
         status_code: HTTPStatus = HTTPStatus.ACCEPTED,
         headers: dict[str, str] | None = None,
     ) -> Response:
@@ -255,8 +224,8 @@ class OdinWeb:
         response_headers = {
             CONTENT_TYPE_HEADER: CONTENT_TYPE_SSE, 
             HERMOD_GRIP_HOLD_HEADER: HERMOD_GRIP_HOLD_MODE,
-            HERMOD_GRIP_CHANNEL_HEADER: channel_id,
-            MCP_SESSION_ID_HEADER: channel_id,
+            HERMOD_GRIP_CHANNEL_HEADER: self.channel_id,
+            MCP_SESSION_ID_HEADER: self.channel_id,
             ACCEPT_HEADER: CONTENT_TYPE_JSON,
         }
         # TODO: generate channel id
@@ -270,6 +239,12 @@ class OdinWeb:
             headers=response_headers,
         )
     
-    @staticmethod
-    def supports_hermod_streaming(request: Request) -> bool:
-        return getattr(request.state, settings.supports_hermod_streaming_state, False)
+    # @staticmethod
+    # def supports_hermod_streaming(request: Request) -> bool:
+    #     return getattr(request.state, settings.supports_hermod_streaming_state, False)
+    
+
+    def create_new_user_channel(self) -> str:
+        """Create a new user channel"""
+        user : CurrentUser = getattr(self.request.state, settings.current_user_state, None)
+        return user.create_hermod_streaming_token()
