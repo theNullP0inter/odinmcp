@@ -11,7 +11,6 @@ from starlette.routing import Mount, Route
 from starlette.exceptions import HTTPException
 from starlette.types import Receive, Scope, Send
 from mcp.types import JSONRPCMessage, JSONRPCResponse, InitializeResult, JSONRPCRequest, JSONRPCError, ErrorData, PARSE_ERROR, INVALID_REQUEST, INVALID_PARAMS, INTERNAL_ERROR, LATEST_PROTOCOL_VERSION, LoggingCapability, PromptsCapability, ResourcesCapability, ToolsCapability, JSONRPCNotification
-from monitors.logging import logger
 # from core.config import settings # Assuming settings might be used elsewhere or was a previous import
 from mcp.server.lowlevel.server import Server as MCPServer, NotificationOptions
 # from mcp.types import InitializeResult, JSONRPCRequest, JSONRPCResponse # Duplicate, covered above
@@ -261,7 +260,6 @@ class OdinHttpStreamingTransport:
         }
         if headers:
             response_headers.update(headers)
-        logger.info(f"Creating JSON response with headers: {response_headers}")
         return Response(
             response_message.model_dump_json(by_alias=True, exclude_none=True)
             if response_message

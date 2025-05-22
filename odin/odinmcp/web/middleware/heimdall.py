@@ -3,7 +3,7 @@ import json
 from typing import Type
 from starlette.exceptions import HTTPException
 from odinmcp.models.auth import CurrentUser
-from monitors.logging import logger
+
 from odinmcp.config import settings
 from starlette.requests import Request
 from odinmcp.models.auth import CurrentUser
@@ -26,7 +26,6 @@ class HeimdallCurrentUserMiddleware:
                 user = self.user_model.from_info(user_info)
                 
             except Exception as e:
-                logger.error("Error parsing user_info_token", extra={"user_info_token": user_info_token, "error": e})
                 raise HTTPException(status_code=401, detail='Unauthorized')
         else:
             raise HTTPException(status_code=401, detail='Unauthorized')

@@ -11,7 +11,7 @@ from starlette.routing import Mount, Route
 from starlette.exceptions import HTTPException
 from starlette.types import Receive, Scope, Send
 from mcp.types import JSONRPCMessage, JSONRPCResponse, InitializeResult, JSONRPCRequest, JSONRPCError, ErrorData, PARSE_ERROR, INVALID_REQUEST, INVALID_PARAMS, INTERNAL_ERROR, LATEST_PROTOCOL_VERSION, LoggingCapability, PromptsCapability, ResourcesCapability, ToolsCapability, JSONRPCNotification
-from monitors.logging import logger
+
 # from core.config import settings # Assuming settings might be used elsewhere or was a previous import
 from mcp.server.lowlevel.server import Server as MCPServer, NotificationOptions
 # from mcp.types import InitializeResult, JSONRPCRequest, JSONRPCResponse # Duplicate, covered above
@@ -37,6 +37,8 @@ from odinmcp.constants import (
     HERMOD_GRIP_HOLD_MODE,
     HERMOD_GRIP_CHANNEL_HEADER
 )
+
+from odinmcp.worker import odin_worker
 
 
 
@@ -88,5 +90,8 @@ class OdinMCP:
         )
         
         return mcp_app
+    
+    def worker(self):
+        return odin_worker
         
 

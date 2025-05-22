@@ -32,9 +32,9 @@ if $reload; then
     >&2 echo "Reload detected; running reload commands"
     >&2 printf "\n\nStarting local server: :80\n\n"
     cd /app
-    uvicorn web.app:app --host "" --port 80 --reload --reload-dir /app --root-path "$rootPath"
+    uvicorn main:web --host "" --port 80 --reload --reload-dir /app --root-path "$rootPath"
 else
     >&2 printf "\n\nStarting Production server: :80\n\n"
     cd /app
-    uvicorn web.app:app --host "" --port 80 --root-path "$rootPath"
+    uvicorn main:web --host "" --port 80 --root-path "$rootPath"
 fi

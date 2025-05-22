@@ -21,8 +21,6 @@ from http import HTTPStatus
 
 
 
-logger = logging.getLogger(__name__)
-
 class HermodStreamingMiddleware:
     async def __call__(self, request: Request, call_next):
         # existing hermod bypass

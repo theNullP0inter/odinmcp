@@ -89,6 +89,23 @@ services:
     # ports:
     #   - 80:80
 
+  odin_worker:
+    image: odin
+    container_name: odin_worker
+    entrypoint: celery -A main.celery worker
+    build:
+      context: ./odin
+    restart: always
+    env_file:
+      - ./.env/odin.env
+    networks:
+      - asgard_pub
+      - asgard_net
+    depends_on:
+      - odin
+    volumes:
+      - ./odin:/app
+
   loki:
     image: loki
     container_name: loki
