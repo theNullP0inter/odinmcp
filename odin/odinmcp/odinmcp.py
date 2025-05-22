@@ -1,6 +1,6 @@
 from http import HTTPStatus
 import json
-from typing import Any, Generic, Optional
+from typing import Any, Generic, List, Optional, Type
 from mcp.server.lowlevel.server import LifespanResultT
 from uuid import uuid4
 from mcp.server.fastmcp import FastMCP 
@@ -21,6 +21,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware import Middleware
 
+from odinmcp.models.user import CurrentUser
 from odinmcp.middleware.heimdall import HeimdallCurrentUserMiddleware
 from odinmcp.middleware.hermod import HermodStreamingMiddleware
 from odinmcp.config import settings
@@ -35,14 +36,6 @@ from odinmcp.constants import (
     HERMOD_GRIP_HOLD_MODE,
     HERMOD_GRIP_CHANNEL_HEADER
 )
-
-
-
-MIDDLEWARE = [
-    Middleware(BaseHTTPMiddleware, dispatch=HeimdallCurrentUserMiddleware()),
-    Middleware(BaseHTTPMiddleware, dispatch=HermodStreamingMiddleware())
-]
-
 
 
 
@@ -62,7 +55,7 @@ class OdinMCP:
             version=version or "0.1.0",
         )
         
-        # Note: this is a placeholder for the actual settings to make it work with the mcp-inspector
+        #  Note: this is a placeholder for the actual settings to make it work with the mcp-inspector
         #  store self._mcp_server.create_initialization_options() for cache
         mcp_initialization_options = self._mcp_server.create_initialization_options(
             notification_options=NotificationOptions(),
@@ -93,7 +86,6 @@ class OdinMCP:
     
     @staticmethod
     def supports_hermod_streaming(request: Request) -> bool:
-        # pull the flag off State (defaults to False if unset)
         return getattr(request.state, settings.supports_hermod_streaming_state, False)
     
     
@@ -159,7 +151,7 @@ class OdinMCP:
         # TODO: keep-alive headers
         if headers:
             response_headers.update(headers)
-        logger.info(f"Creating streaming hold response with headers: {response_headers}")
+
         return Response(
             content=None,
             status_code=status_code,
@@ -167,7 +159,11 @@ class OdinMCP:
         )
     
     
-    def app(self ) -> Starlette:
+    def sse_app(
+        self, 
+        current_user_model: Type[CurrentUser] = CurrentUser,
+        extra_middleware:List[Middleware] = [] 
+    ) -> Starlette:
         
         
         async def handle_request(request: Request) -> Response:
@@ -176,11 +172,11 @@ class OdinMCP:
 
             meth = request.method.upper()
             if meth == "GET":
-                return await self._handle_get(request, channel_id)
+                return await self._handle_get(request, channel_id) # -> Needs a validated session
             elif meth == "POST":
-                return await self._handle_post(request, channel_id)
+                return await self._handle_post(request, channel_id) # -> Needs a validated session. Doesnt need for initialize
             elif meth == "DELETE":
-                return await self._handle_delete(request, channel_id)
+                return await self._handle_delete(request, channel_id) # -> Needs a validated session
             else:
                 # For Method Not Allowed, a simple HTTP response is fine,
                 # but if you want JSON-RPC, you could use _create_error_response
@@ -191,14 +187,17 @@ class OdinMCP:
             debug=settings.debug,
             routes=[
                 Route( 
-                "/{"+settings.organization_path_param +"}", 
-                endpoint=handle_request, 
-                methods=["GET", "POST", "DELETE"],
-                middleware=MIDDLEWARE,
+                    "/", 
+                    endpoint=handle_request, 
+                    methods=["GET", "POST", "DELETE"],
+                    middleware=[
+                        Middleware(BaseHTTPMiddleware, dispatch=HeimdallCurrentUserMiddleware(current_user_model)),
+                        Middleware(BaseHTTPMiddleware, dispatch=HermodStreamingMiddleware())
+                    ] + extra_middleware
+                    
                 ),
             ],
         )
-        
         
         return mcp_app
         
@@ -303,12 +302,7 @@ class OdinMCP:
             )
             
             
-            
-            
-            
-            
-            
-            
+                   
 
     async def _handle_delete(self, request: Request, channel_id: str) -> Response:
         # TODO: handle DELETE request. terminate session.

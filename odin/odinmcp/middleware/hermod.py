@@ -36,12 +36,13 @@ class HermodStreamingMiddleware:
             supports_hermod_streaming = True
             
         setattr(request.state, settings.supports_hermod_streaming_state, supports_hermod_streaming)
-        # new checks:
+        
+        # TODO: 1. if mcp-session-id exists -> it should be valid   
         channel_id = request.headers.get(MCP_SESSION_ID_HEADER)
         
         
         
-        # 1. Not Acceptable
+        # 2. Not Acceptable
         if CONTENT_TYPE_JSON not in accept_hdr and CONTENT_TYPE_SSE not in accept_hdr:
             logger.info(
                 f"Client rejected for session {channel_id}, bad Accept header: {accept_hdr}"
@@ -52,6 +53,9 @@ class HermodStreamingMiddleware:
                 headers={MCP_SESSION_ID_HEADER: channel_id} if channel_id else {}
             )
         
-        # TODO: 2. Unsupported Content-Type   
+        # TODO: 3. Unsupported Content-Type
+        
+        
+        
 
         return await call_next(request)

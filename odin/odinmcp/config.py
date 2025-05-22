@@ -17,14 +17,12 @@ class OdenSettings(BaseSettings, Generic[LifespanResultT]):
     # debugging
     debug: Optional[bool] = False
     
-    # routing
-    path_prefix: Optional[str] = "mcp"
-    organization_path_param: Optional[str] = "org_code"
     
     
-    # authentication
+    # authentication and streaming
     user_info_token: Optional[str] = "x-userinfo"
     hermod_streaming_header: Optional[str] = "x-hermod-stream"
+    hermod_streaming_token_secret: str
     
     
     # state variables

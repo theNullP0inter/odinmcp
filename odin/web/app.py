@@ -24,6 +24,6 @@ mcp = OdinMCP(
 
 app.mount(
     "/mcp",
-    mcp.app(),
+    mcp.sse_app(),
     name="mcp",
 )

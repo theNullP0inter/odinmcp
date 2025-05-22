@@ -1,5 +1,8 @@
 from pydantic import BaseModel, Field
 from typing import Any, Dict, List
+import jwt
+import time
+from odinmcp.config import settings
 
 class Organization(BaseModel):
     id: str
@@ -10,8 +13,6 @@ class CurrentUser(BaseModel):
     user_id:str
     name: str
     email:str
-    name: str
-    organizations: Dict[str, Organization]
     session_id: str = Field(..., alias="sid")
     
     class Config:
@@ -19,16 +20,30 @@ class CurrentUser(BaseModel):
 
     @classmethod
     def from_info(cls, info:Dict[str,Any]):
-        mapped_orgs = {}
-        for org_code, org in info.get("organization", {}).items():
-            mapped_orgs[org_code] = Organization(
-                id=org.get("id"),
-                organization_code=org_code
-            )
-            
-        info["organizations"] = mapped_orgs
-        if "organization" in info:
-            del info["organization"]
         return cls(
             **info
         )
+        
+        
+    # method to create a streaming token for the user
+    # {user_id + session_id + timestamp}
+    def create_hermod_streaming_token(self) -> str:
+        payload = {
+            "user_id": self.user_id,
+            "session_id": self.session_id,
+            "created_at": int(time.time()),
+        }
+        token = jwt.encode(payload, settings.hermod_streaming_token_secret, algorithm="HS256")
+        return token
+    
+    # method to validate the token: 
+    # check with jwt secret and also check if the user_id, session_id are valid
+    
+    def validate_hermod_streaming_token(self, token:str) -> bool:
+        try:
+            payload = jwt.decode(token, settings.hermod_streaming_token_secret, algorithms=["HS256"])
+            if payload["user_id"] != self.user_id or payload["session_id"] != self.session_id:
+                return False
+            return True
+        except Exception as e:
+            return False
