@@ -40,13 +40,9 @@ class HermodStreamingMiddleware:
         
         # 1. if mcp-session-id exists -> it should be valid   
         channel_id = request.headers.get(MCP_SESSION_ID_HEADER, None)
-        logger.info(f"Client session id: {channel_id}")
         user  = getattr(request.state, settings.current_user_state, None)
         
         if channel_id and not (user and user.validate_hermod_streaming_token(channel_id)):
-            logger.info(
-                f"Client rejected for session {channel_id}, no user found in state"
-            )
             raise HTTPException(
                 status_code=HTTPStatus.UNAUTHORIZED,
                 detail="User not found",
@@ -56,9 +52,6 @@ class HermodStreamingMiddleware:
         
         # 2. Not Acceptable
         if CONTENT_TYPE_JSON not in accept_hdr and CONTENT_TYPE_SSE not in accept_hdr:
-            logger.info(
-                f"Client rejected for session {channel_id}, bad Accept header: {accept_hdr}"
-            )
             raise HTTPException(
                 status_code=HTTPStatus.NOT_ACCEPTABLE,
                 detail=f"Client must accept {CONTENT_TYPE_JSON} or {CONTENT_TYPE_SSE}",

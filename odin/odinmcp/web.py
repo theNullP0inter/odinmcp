@@ -109,7 +109,28 @@ class OdinWeb:
                 status_code=HTTPStatus.NOT_ACCEPTABLE, # 406
                 error_code=INVALID_REQUEST
             )
-        return self._create_streaming_hold_response()
+        if self.channel_id: 
+            return self._create_streaming_hold_response(self.channel_id)
+        else:
+            # TODO: support legacy sse by returning endpoint event
+            return self._create_error_response(
+                error_message="Session ID is required for GET.",
+                status_code=HTTPStatus.BAD_REQUEST, # 400
+                error_code=INVALID_REQUEST
+            )
+    
+    async def _handle_delete(self) -> Response:
+        # TODO: handle DELETE request. terminate session.
+        if not self.channel_id:
+            return self._create_error_response(
+                error_message="Session ID is required for DELETE.",
+                status_code=HTTPStatus.BAD_REQUEST, # 400
+                error_code=INVALID_REQUEST
+            )
+        return self._create_json_response(
+            response_message=None,
+            status_code=HTTPStatus.OK
+        )
         
         
 
@@ -156,19 +177,29 @@ class OdinWeb:
                 jsonrpc=message.root.jsonrpc or "2.0" 
             )
             
+            self.channel_id = self.create_new_user_channel()
             return self._create_json_response(
                 response_message,
                 status_code=HTTPStatus.OK,
             )
+        
+        if not self.channel_id:
+            return self._create_error_response(
+                error_message="Session ID is required for POST.",
+                status_code=HTTPStatus.BAD_REQUEST, # 400
+                error_code=INVALID_REQUEST
+            )
+        
             
-            
-        elif isinstance(message.root, JSONRPCRequest):
+        if isinstance(message.root, JSONRPCRequest):
             # TODO: trigger tasks -> requests that are not initialize
             pass
         elif isinstance(message.root, JSONRPCNotification):
             
             if message.root.method == "notifications/initialized" and self.supports_hermod_streaming:
-                res = self._create_streaming_hold_response()
+                res = self._create_streaming_hold_response(
+                    self.channel_id,
+                )
             else:
                 #  send 202 json response
                 res = self._create_json_response(
@@ -186,13 +217,7 @@ class OdinWeb:
             )
             
             
-    async def _handle_delete(self) -> Response:
-        # TODO: handle DELETE request. terminate session.
-        return self._create_json_response(
-            response_message=None,
-            status_code=HTTPStatus.OK
-        )
-
+    
 
     
     def _create_error_response(
@@ -247,6 +272,7 @@ class OdinWeb:
         
     def _create_streaming_hold_response(
         self,
+        channel_id,
         status_code: HTTPStatus = HTTPStatus.ACCEPTED,
         headers: dict[str, str] | None = None,
     ) -> Response:
@@ -254,8 +280,8 @@ class OdinWeb:
         response_headers = {
             CONTENT_TYPE_HEADER: CONTENT_TYPE_SSE, 
             HERMOD_GRIP_HOLD_HEADER: HERMOD_GRIP_HOLD_MODE,
-            HERMOD_GRIP_CHANNEL_HEADER: self.channel_id,
-            MCP_SESSION_ID_HEADER: self.channel_id,
+            HERMOD_GRIP_CHANNEL_HEADER: channel_id,
+            MCP_SESSION_ID_HEADER: channel_id,
             ACCEPT_HEADER: CONTENT_TYPE_JSON,
         }
         # TODO: generate channel id
@@ -268,11 +294,6 @@ class OdinWeb:
             status_code=status_code,
             headers=response_headers,
         )
-    
-    # @staticmethod
-    # def supports_hermod_streaming(request: Request) -> bool:
-    #     return getattr(request.state, settings.supports_hermod_streaming_state, False)
-    
 
     def create_new_user_channel(self) -> str:
         """Create a new user channel"""
