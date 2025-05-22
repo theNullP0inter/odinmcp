@@ -25,7 +25,7 @@ from odinmcp.models.auth import CurrentUser
 from odinmcp.web.middleware.heimdall import HeimdallCurrentUserMiddleware
 from odinmcp.web.middleware.hermod import HermodStreamingMiddleware
 from odinmcp.config import settings
-from odinmcp.web.controller import OdinWeb
+from odinmcp.web.transports.http_streaming import OdinHttpStreamingTransport
 from odinmcp.constants import (
     MCP_SESSION_ID_HEADER,
     LAST_EVENT_ID_HEADER,
@@ -56,9 +56,6 @@ class OdinMCP:
             version=version or "0.1.0",
         )
         
-        
-        
-    
     def sse_app(
         self, 
         current_user_model: Type[CurrentUser] = CurrentUser,
@@ -69,10 +66,11 @@ class OdinMCP:
             request: Request,
         ) -> Response:
             
-            web = OdinWeb(self._mcp_server, request)
+            web = OdinHttpStreamingTransport(self._mcp_server, request)
             # Handle the request and send the response
             return await web.get_response()
         
+        # TODO: add a POST messages endpoint to spport legacy SSE
         mcp_app = Starlette(
             debug=settings.debug,
             routes=[

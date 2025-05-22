@@ -38,7 +38,7 @@ from odinmcp.constants import (
 )
 
 
-class OdinWeb:
+class OdinHttpStreamingTransport:
     def __init__(
         self,
         mcp_server: MCPServer,
