@@ -11,15 +11,15 @@ class Organization(BaseModel):
 
 class CurrentUser(BaseModel):
     user_id:str
-    name: str
-    email:str
     session_id: str = Field(..., alias="sid")
+    scope: List[str] = Field(default_factory=list)
     
     class Config:
         arbitrary_types_allowed = True
 
     @classmethod
     def from_info(cls, info:Dict[str,Any]):
+        info["scope"] = info.get("scope", "").split(" ")
         return cls(
             **info
         )
