@@ -56,36 +56,6 @@ class OdinMCP:
             version=version or "0.1.0",
         )
         
-        mcp_initialization_options = self._mcp_server.create_initialization_options(
-            notification_options=NotificationOptions(),
-            experimental_capabilities={},
-        )
-        
-        # TODO: Remove the capability manipulation once server is fully implemented
-        #  Note: this is a placeholder for the actual settings to make it work with the mcp-inspector
-        
-        mcp_initialization_options.capabilities.logging = LoggingCapability()
-        mcp_initialization_options.capabilities.prompts = PromptsCapability(
-            listChanged=True,
-        )
-        mcp_initialization_options.capabilities.resources = ResourcesCapability(
-            subscribe=True,
-            listChanged=True,
-        )
-        mcp_initialization_options.capabilities.tools = ToolsCapability(
-            listChanged=True,
-        )
-        
-        self.mcp_initialize_result = InitializeResult(
-                protocolVersion=LATEST_PROTOCOL_VERSION,
-                capabilities=mcp_initialization_options.capabilities,
-                serverInfo={ 
-                    "name": mcp_initialization_options.server_name,
-                    "version": mcp_initialization_options.server_version,
-                },
-                instructions=self._mcp_server.instructions,
-                meta={},
-        )
         
         
     
@@ -99,7 +69,7 @@ class OdinMCP:
             request: Request,
         ) -> Response:
             
-            web = OdinWeb(self.mcp_initialize_result, request)
+            web = OdinWeb(self._mcp_server, request)
             # Handle the request and send the response
             return await web.get_response()
         

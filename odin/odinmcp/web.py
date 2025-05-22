@@ -41,19 +41,49 @@ from odinmcp.constants import (
 class OdinWeb:
     def __init__(
         self,
-        mcp_initialize_result: InitializeResult,
+        mcp_server: MCPServer,
         request: Request  
     ):
         
-        self.mcp_initialize_result = mcp_initialize_result
+        self.mcp_server = mcp_server
         self.request = request
         self.supports_hermod_streaming = getattr(request.state, settings.supports_hermod_streaming_state, False)
         self.current_user = getattr(request.state, settings.current_user_state, None)
         self.channel_id = self.request.headers.get(MCP_SESSION_ID_HEADER) or self.create_new_user_channel()
+    
+    
+    def get_initialize_result(self) -> InitializeResult:
+        mcp_initialization_options = self.mcp_server.create_initialization_options(
+            notification_options=NotificationOptions(),
+            experimental_capabilities={},
+        )
         
+        # TODO: Remove the capability manipulation once server is fully implemented
+        #  Note: this is a placeholder for the actual settings to make it work with the mcp-inspector
         
+        mcp_initialization_options.capabilities.logging = LoggingCapability()
+        mcp_initialization_options.capabilities.prompts = PromptsCapability(
+            listChanged=True,
+        )
+        mcp_initialization_options.capabilities.resources = ResourcesCapability(
+            subscribe=True,
+            listChanged=True,
+        )
+        mcp_initialization_options.capabilities.tools = ToolsCapability(
+            listChanged=True,
+        )
         
-        
+        return InitializeResult(
+                protocolVersion=LATEST_PROTOCOL_VERSION,
+                capabilities=mcp_initialization_options.capabilities,
+                serverInfo={ 
+                    "name": mcp_initialization_options.server_name,
+                    "version": mcp_initialization_options.server_version,
+                },
+                instructions=self.mcp_server.instructions,
+                meta={},
+        )
+            
         
     async def get_response(self) -> Response:
         
@@ -122,7 +152,7 @@ class OdinWeb:
             
             response_message = JSONRPCResponse(
                 id=req_id,
-                result=self.mcp_initialize_result.model_dump(),
+                result=self.get_initialize_result().model_dump(by_alias=True, exclude_none=True),
                 jsonrpc=message.root.jsonrpc or "2.0" 
             )
             
