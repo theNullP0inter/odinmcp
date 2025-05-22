@@ -1,6 +1,7 @@
 import logging
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
+from odinmcp.models.user import CurrentUser
 from odinmcp.config import settings
 from mcp.types import (
     JSONRPCMessage, JSONRPCResponse, InitializeResult, JSONRPCRequest,
@@ -38,8 +39,20 @@ class HermodStreamingMiddleware:
         setattr(request.state, settings.supports_hermod_streaming_state, supports_hermod_streaming)
         
         # TODO: 1. if mcp-session-id exists -> it should be valid   
-        channel_id = request.headers.get(MCP_SESSION_ID_HEADER)
+        channel_id = request.headers.get(MCP_SESSION_ID_HEADER, None)
+        logger.info(f"Client session id: {channel_id}")
+        user  = getattr(request.state, settings.current_user_state, None)
         
+
+        if channel_id and not (user and user.validate_hermod_streaming_token(channel_id)):
+            logger.info(
+                f"Client rejected for session {channel_id}, no user found in state"
+            )
+            raise HTTPException(
+                status_code=HTTPStatus.UNAUTHORIZED,
+                detail="User not found",
+                headers={MCP_SESSION_ID_HEADER: channel_id}
+            )
         
         
         # 2. Not Acceptable
@@ -56,6 +69,4 @@ class HermodStreamingMiddleware:
         # TODO: 3. Unsupported Content-Type
         
         
-        
-
         return await call_next(request)
