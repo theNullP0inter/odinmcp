@@ -22,8 +22,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware import Middleware
 
 from odinmcp.models.auth import CurrentUser
-from odinmcp.middleware.heimdall import HeimdallCurrentUserMiddleware
-from odinmcp.middleware.hermod import HermodStreamingMiddleware
+from odinmcp.web.middleware.heimdall import HeimdallCurrentUserMiddleware
+from odinmcp.web.middleware.hermod import HermodStreamingMiddleware
 from odinmcp.config import settings
 from odinmcp.constants import (
     MCP_SESSION_ID_HEADER,
