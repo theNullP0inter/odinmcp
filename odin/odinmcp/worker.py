@@ -13,7 +13,7 @@ class OdinWorker:
             broker=settings.celery_broker,
             backend=settings.celery_backend
         )
-        worker.task(self.test_task)
+        worker.task(self.test_task, name="odinmcp.test_task")
         return worker
 
     def test_task(self, a, b):

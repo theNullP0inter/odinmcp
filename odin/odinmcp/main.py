@@ -61,17 +61,21 @@ class OdinMCP:
             instructions=instructions,
             version=version or "0.1.0",
         )
+        self._worker = OdinWorker(self._mcp_server).build()
+        self.web = OdinWeb(
+            self._mcp_server,
+            self._worker
+        )
+            
         
-    def get_web(
+    def sse_app(
         self, 
         current_user_model: Type[CurrentUser] = CurrentUser,
         extra_middleware:List[Middleware] = [] 
     ) -> Starlette:
-        web = OdinWeb(self._mcp_server, current_user_model, extra_middleware)
-        return web.build()
+        return self.web.build(current_user_model, extra_middleware)
         
-    def get_worker(self) -> Celery:
-        worker = OdinWorker(self._mcp_server)
-        return worker.build()
+    def async_worker(self) -> Celery:
+        return self._worker
         
 

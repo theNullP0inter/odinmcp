@@ -9,6 +9,6 @@ mcp = OdinMCP(
 )
 
 
-web = mcp.get_web()
-celery = mcp.get_worker()
+web = mcp.sse_app()
+celery = mcp.async_worker()
 

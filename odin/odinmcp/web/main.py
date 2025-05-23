@@ -11,28 +11,30 @@ from starlette.middleware import Middleware
 from odinmcp.models.auth import CurrentUser
 from mcp.server.lowlevel.server import Server as MCPServer
 from typing import Type, List
+from celery import Celery
 
 class OdinWeb:
 
     def __init__(
         self,
         mcp_server: MCPServer,
+        worker: Celery,
+    ):
+        self.mcp_server = mcp_server
+        self.worker = worker
+
+    
+    def build(
+        self,
         current_user_model: Type[CurrentUser] = CurrentUser,
         extra_middleware:List[Middleware] = [] 
     ):
-        self.mcp_server = mcp_server
-        self.current_user_model = current_user_model
-        self.extra_middleware = extra_middleware
-        
-
-    
-    def build(self):
 
 
         async def handle_mcp_request(
             request: Request,
         ) -> Response:
-            transport = OdinHttpStreamingTransport(self.mcp_server, request)
+            transport = OdinHttpStreamingTransport(self.mcp_server, request, self.worker)
             return await transport.get_response()
         
 
@@ -41,9 +43,9 @@ class OdinWeb:
         mcp_app = Starlette(
             debug=settings.debug,
             middleware=[
-                Middleware(BaseHTTPMiddleware, dispatch=HeimdallCurrentUserMiddleware(self.current_user_model)),
+                Middleware(BaseHTTPMiddleware, dispatch=HeimdallCurrentUserMiddleware(current_user_model)),
                 Middleware(BaseHTTPMiddleware, dispatch=HermodStreamingMiddleware())
-            ] + self.extra_middleware,
+            ] + extra_middleware,
             routes=[
                 Route( 
                     "/", 
