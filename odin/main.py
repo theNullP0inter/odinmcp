@@ -1,4 +1,5 @@
-from odinmcp.odinmcp import OdinMCP
+from odinmcp import OdinMCP
+from fastapi import FastAPI
 
 
 
@@ -8,6 +9,6 @@ mcp = OdinMCP(
 )
 
 
-web = mcp.sse_app()
-celery = mcp.worker()
+web = mcp.get_web()
+celery = mcp.get_worker()
 

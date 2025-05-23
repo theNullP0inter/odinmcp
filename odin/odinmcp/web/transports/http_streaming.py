@@ -37,6 +37,7 @@ from odinmcp.constants import (
 )
 
 
+
 class OdinHttpStreamingTransport:
     def __init__(
         self,
@@ -191,8 +192,11 @@ class OdinHttpStreamingTransport:
         
             
         if isinstance(message.root, JSONRPCRequest):
-            # TODO: trigger tasks -> requests that are not initialize
-            pass
+            # TODO: trigger tasks for non-initialize requests
+            return self._create_json_response(
+                response_message=None,
+                status_code=HTTPStatus.ACCEPTED,
+            )
         elif isinstance(message.root, JSONRPCNotification):
             
             if message.root.method == "notifications/initialized" and self.supports_hermod_streaming:

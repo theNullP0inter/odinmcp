@@ -26,6 +26,7 @@ from odinmcp.web.middleware.heimdall import HeimdallCurrentUserMiddleware
 from odinmcp.web.middleware.hermod import HermodStreamingMiddleware
 from odinmcp.config import settings
 from odinmcp.web.transports.http_streaming import OdinHttpStreamingTransport
+from odinmcp.web import OdinWeb
 from odinmcp.constants import (
     MCP_SESSION_ID_HEADER,
     LAST_EVENT_ID_HEADER,
@@ -38,7 +39,10 @@ from odinmcp.constants import (
     HERMOD_GRIP_CHANNEL_HEADER
 )
 
-from odinmcp.worker import odin_worker
+from odinmcp.config import settings
+from celery import Celery
+from celery.contrib.abortable import AbortableTask
+from odinmcp.worker import OdinWorker
 
 
 
@@ -58,40 +62,16 @@ class OdinMCP:
             version=version or "0.1.0",
         )
         
-    def sse_app(
+    def get_web(
         self, 
         current_user_model: Type[CurrentUser] = CurrentUser,
         extra_middleware:List[Middleware] = [] 
     ) -> Starlette:
+        web = OdinWeb(self._mcp_server, current_user_model, extra_middleware)
+        return web.build()
         
-        async def handle_request(
-            request: Request,
-        ) -> Response:
-            
-            web = OdinHttpStreamingTransport(self._mcp_server, request)
-            # Handle the request and send the response
-            return await web.get_response()
-        
-        # TODO: add a POST messages endpoint to spport legacy SSE
-        mcp_app = Starlette(
-            debug=settings.debug,
-            routes=[
-                Route( 
-                    "/", 
-                    endpoint=handle_request, 
-                    methods=["GET", "POST", "DELETE"],
-                    middleware=[
-                        Middleware(BaseHTTPMiddleware, dispatch=HeimdallCurrentUserMiddleware(current_user_model)),
-                        Middleware(BaseHTTPMiddleware, dispatch=HermodStreamingMiddleware())
-                    ] + extra_middleware
-                    
-                ),
-            ],
-        )
-        
-        return mcp_app
-    
-    def worker(self):
-        return odin_worker
+    def get_worker(self) -> Celery:
+        worker = OdinWorker(self._mcp_server)
+        return worker.build()
         
 
