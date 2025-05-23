@@ -18,15 +18,16 @@ class OdinWeb:
     def __init__(
         self,
         mcp_server: MCPServer,
+        current_user_model: Type[CurrentUser],
         worker: Celery,
     ):
         self.mcp_server = mcp_server
         self.worker = worker
+        self.current_user_model = current_user_model
 
     
     def build(
         self,
-        current_user_model: Type[CurrentUser] = CurrentUser,
         extra_middleware:List[Middleware] = [] 
     ):
 
@@ -43,7 +44,7 @@ class OdinWeb:
         mcp_app = Starlette(
             debug=settings.debug,
             middleware=[
-                Middleware(BaseHTTPMiddleware, dispatch=HeimdallCurrentUserMiddleware(current_user_model)),
+                Middleware(BaseHTTPMiddleware, dispatch=HeimdallCurrentUserMiddleware(self.current_user_model)),
                 Middleware(BaseHTTPMiddleware, dispatch=HermodStreamingMiddleware())
             ] + extra_middleware,
             routes=[

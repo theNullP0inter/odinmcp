@@ -35,7 +35,7 @@ from odinmcp.constants import (
     HERMOD_GRIP_HOLD_MODE,
     HERMOD_GRIP_CHANNEL_HEADER
 )
-from celery import Celery
+from odinmcp.worker import OdinWorker
 
 
 class OdinHttpStreamingTransport:
@@ -43,14 +43,14 @@ class OdinHttpStreamingTransport:
         self,
         mcp_server: MCPServer,
         request: Request,
-        worker: Celery  
+        worker: OdinWorker   
     ):
         
         self.mcp_server = mcp_server
         self.request = request
         self.worker = worker
         self.supports_hermod_streaming = getattr(request.state, settings.supports_hermod_streaming_state, False)
-        self.current_user = getattr(request.state, settings.current_user_state, None)
+        self.current_user = getattr(request.state, settings.current_user_state)
         self.channel_id = self.request.headers.get(MCP_SESSION_ID_HEADER) or self.create_new_user_channel()
     
     
@@ -195,9 +195,11 @@ class OdinHttpStreamingTransport:
             
         if isinstance(message.root, JSONRPCRequest):
             # TODO: trigger tasks for non-initialize requests
-            self.worker.send_task(
-                "odinmcp.test_task",
-                args=(1,2)
+            self.worker.send_handle_mcp_request(
+                request=message.root, 
+                channel_id=self.channel_id,
+                current_user=self.current_user,
+
             )
             return self._create_json_response(
                 response_message=None,

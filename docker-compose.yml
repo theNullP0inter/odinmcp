@@ -92,7 +92,7 @@ services:
   odin_worker:
     image: odin
     container_name: odin_worker
-    entrypoint: watchmedo auto-restart --directory=/app --pattern=*.py --recursive -- celery -A main.celery worker -E -l info
+    entrypoint: watchmedo auto-restart --directory=/app --pattern=*.py --recursive -- celery -A main.worker worker -E -l info
     build:
       context: ./odin
     restart: always

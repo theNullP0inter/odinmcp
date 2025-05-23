@@ -3,12 +3,8 @@ from fastapi import FastAPI
 
 
 
-mcp = OdinMCP(
-    "Odin MCP", 
-    "easy way to fetch all your data"
-)
+mcp = OdinMCP("Odin MCP Demo")
 
 
-web = mcp.sse_app()
-celery = mcp.async_worker()
+web, worker = mcp.sse_app()
 
