@@ -108,13 +108,10 @@ class OdinWorker:
     async def task_async_handle_mcp_notification(self, notification: str, channel_id: str, current_user: str) -> None:
         cli_notif = ClientNotification(json.loads(notification))
 
-        async with AsyncExitStack() as stack:
-            lifespan_context = await stack.enter_async_context(self.mcp_server.lifespan(self.mcp_server))
-            
-            if type(cli_notif.root) in self.mcp_server.notification_handlers:
-                try:
-                    handler = self.mcp_server.notification_handlers[type(cli_notif.root)]
-                    await handler(cli_notif.root)
-                except Exception as err:
-                    pass
+        if type(cli_notif.root) in self.mcp_server.notification_handlers:
+            try:
+                handler = self.mcp_server.notification_handlers[type(cli_notif.root)]
+                await handler(cli_notif.root)
+            except Exception as err:
+                pass
             
