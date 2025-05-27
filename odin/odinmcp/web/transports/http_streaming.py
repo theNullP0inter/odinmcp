@@ -183,7 +183,7 @@ class OdinHttpStreamingTransport:
             
         if isinstance(message.root, JSONRPCRequest):
             # TODO: trigger tasks for non-initialize requests
-            self.worker.send_handle_mcp_request(
+            self.worker.handle_mcp_request(
                 request=message.root, 
                 channel_id=self.channel_id,
                 current_user=self.current_user,

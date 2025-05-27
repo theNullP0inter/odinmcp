@@ -10,7 +10,7 @@ from mcp.shared.message import MessageMetadata, SessionMessage
 from mcp.server.lowlevel.server import Server as MCPServer
 from celery import Celery
 from odinmcp.config import settings
-from mcp.types import JSONRPCRequest
+from mcp.types import JSONRPCRequest, JSONRPCNotification
 from odinmcp.models.auth import CurrentUser
 import json
 from mcp.client.session import ClientSession
@@ -40,9 +40,11 @@ class OdinWorker:
         return self.worker
 
     
-    def send_handle_mcp_request(self, request: JSONRPCRequest, channel_id: str, current_user: CurrentUser):
+    def handle_mcp_request(self, request: JSONRPCRequest, channel_id: str, current_user: CurrentUser):
         self.worker.send_task("odinmcp.handle_mcp_request", args=(request.model_dump_json(by_alias=True, exclude_none=True), channel_id, current_user.model_dump_json(by_alias=True, exclude_none=True)))
-        
+    
+    def handle_mcp_notification(self, notification: JSONRPCNotification, channel_id: str, current_user: CurrentUser):
+        self.worker.send_task("odinmcp.handle_mcp_notification", args=(notification.model_dump_json(by_alias=True, exclude_none=True), channel_id, current_user.model_dump_json(by_alias=True, exclude_none=True)))
 
     def _build_worker(self):
         worker =  Celery(
@@ -51,6 +53,7 @@ class OdinWorker:
             backend=settings.celery_backend
         )
         worker.task(self.task_handle_mcp_request, name="odinmcp.handle_mcp_request")
+        worker.task(self.task_handle_mcp_notification, name="odinmcp.handle_mcp_notification")
         return worker
 
     def task_handle_mcp_request(self, request: str, channel_id: str, current_user: str) -> None:
@@ -100,12 +103,43 @@ class OdinWorker:
                     if token is not None:
                         request_ctx.reset(token)
                 
-                # TODO[Later]: send and event to Hermod using channel_id
+                
             else:
-                # TODO[Later]: send and error event to Hermod using channel_id
-                print(f"Handler not found for request type: {type(cli_req.root)}")
+                response = ErrorData(code=0, message="Handler not found", data=None)
 
-
+            await session._send_response(response, rpc_request.id)
 
     
-        
+    def task_handle_mcp_notification(self, notification: str, channel_id: str, current_user: str) -> None:
+        return async_to_sync(self.task_async_handle_mcp_notification)(notification, channel_id, current_user)
+    
+    async def task_async_handle_mcp_notification(self, notification: str, channel_id: str, current_user: str) -> None:
+        rpc_notification = JSONRPCNotification.model_validate_json(notification)
+        cli_notif = ClientNotification(json.loads(notification))
+
+        async with AsyncExitStack() as stack:
+            lifespan_context = await stack.enter_async_context(self.mcp_server.lifespan(self.mcp_server))
+            session = OdinWorkerSession(
+                channel_id,
+                current_user,
+                self.mcp_server.create_initialization_options(),
+            )
+
+            if type(cli_notif.root) in self.mcp_server.notification_handlers:
+                try:
+                    token = request_ctx.set(
+                        RequestContext(
+                            rpc_notification.id,
+                            rpc_notification.params.get("_meta", None),
+                            session,
+                            lifespan_context,
+                        )
+                    )
+                    handler = self.mcp_server.notification_handlers[type(cli_notif.root)]
+                    await handler(cli_notif.root)
+                except Exception as err:
+                    pass
+                finally:
+                    if token is not None:
+                        request_ctx.reset(token)
+            
