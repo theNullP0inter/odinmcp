@@ -5,7 +5,7 @@ from mcp.types import (
     ClientRequest, ServerRequest, ClientNotification, ServerNotification, ClientResult, ServerResult
 )
 from mcp.shared.session import (
-    SendRequestT, SendResultT, SendNotificationT, ReceiveResultT, ProgressFnT
+    SendRequestT, SendResultT, SendNotificationT, ReceiveResultT, ProgressFnT, RequestId
 )
 from mcp.shared.message import MessageMetadata, SessionMessage
 from mcp.server.lowlevel.server import Server as MCPServer
@@ -29,6 +29,7 @@ import json
 from mcp.types import ErrorData
 import requests
 import time
+from pydantic import BaseModel
 
 
 
@@ -65,9 +66,29 @@ class OdinWorkerSession( ServerSession ):
         for url in settings.hermod_zero_mq_urls:
             hermod_socket.connect(url)
         return hermod_socket
+    
+    def send_sse_message(self, message: BaseModel) -> None:
+        hermod_socket = self.get_hermod_socket()
+        
+        content = "event: message\ndata: " + message.model_dump_json(by_alias=True, exclude_none=True)
+        item = {
+            "channel": self._channel_id,
+            "formats":{
+                "http-stream": {
+                    "content": content +"\n\n"
+                }
+            }
+        }
+        # TODO: wait till socket is ready instead of time
+        time.sleep(0.1)
+        hermod_socket.send_multipart(
+            [
+                self._channel_id.encode(),
+                ("J" + json.dumps(item)).encode(),
+            ]
+        )
         
     
-
     async def send_request(
         self,
         request: SendRequestT,
@@ -83,7 +104,7 @@ class OdinWorkerSession( ServerSession ):
     async def send_notification(
         self,
         notification: SendNotificationT,
-        metadata: MessageMetadata = None,
+        related_request_id: RequestId | None = None,
     ) -> None:
         print(f"send_notification called with notification={notification}, metadata={metadata}")
         pass
@@ -93,7 +114,6 @@ class OdinWorkerSession( ServerSession ):
         response: SendResultT | ErrorData,
         request_id: int,
     ) -> None:
-        print(f"_send_response called with response={response}, request_id={request_id}")
         if isinstance(response, ErrorData):
             jsonrpc_error = JSONRPCError(jsonrpc="2.0", id=request_id, error=response)
             message = JSONRPCMessage(jsonrpc_error)
@@ -107,30 +127,8 @@ class OdinWorkerSession( ServerSession ):
             )
             message = JSONRPCMessage(jsonrpc_response)
         
-        
-        content = "event: message\ndata: " + message.model_dump_json(by_alias=True, exclude_none=True)
-        
-        item = {
-            "channel": self._channel_id,
-            "formats":{
-                "http-stream": {
-                    "content": content +"\n\n"
-                }
-            }
-        }
+        self.send_sse_message(message)
 
-        
-        hermod_socket = self.get_hermod_socket()
-        # TODO: wait till socket is ready instead of time
-        time.sleep(0.1)
-        hermod_socket.send_multipart(
-            [
-                self._channel_id.encode(),
-                ("J" + json.dumps(item)).encode(),
-            ]
-        )
-
-        
     
     # Below methods are used with server.run() . Since we are not using server.run() we are not implementing them
     async def _receive_loop(self) -> None:
