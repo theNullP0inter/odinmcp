@@ -123,13 +123,10 @@ class OdinWorkerSession( ServerSession ):
         hermod_socket = self.get_hermod_socket()
         # TODO: wait till socket is ready instead of time
         time.sleep(0.1)
-
-
         hermod_socket.send_multipart(
             [
                 self._channel_id.encode(),
                 ("J" + json.dumps(item)).encode(),
-                # "\n\n".encode(),
             ]
         )
 
