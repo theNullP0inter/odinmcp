@@ -106,32 +106,15 @@ class OdinWorker:
         return async_to_sync(self.task_async_handle_mcp_notification)(notification, channel_id, current_user)
     
     async def task_async_handle_mcp_notification(self, notification: str, channel_id: str, current_user: str) -> None:
-        rpc_notification = JSONRPCNotification.model_validate_json(notification)
         cli_notif = ClientNotification(json.loads(notification))
 
         async with AsyncExitStack() as stack:
             lifespan_context = await stack.enter_async_context(self.mcp_server.lifespan(self.mcp_server))
-            session = OdinWorkerSession(
-                channel_id,
-                current_user,
-                self.mcp_server.create_initialization_options(),
-            )
-
+            
             if type(cli_notif.root) in self.mcp_server.notification_handlers:
                 try:
-                    token = request_ctx.set(
-                        RequestContext(
-                            rpc_notification.id,
-                            rpc_notification.params.get("_meta", None),
-                            session,
-                            lifespan_context,
-                        )
-                    )
                     handler = self.mcp_server.notification_handlers[type(cli_notif.root)]
                     await handler(cli_notif.root)
                 except Exception as err:
                     pass
-                finally:
-                    if token is not None:
-                        request_ctx.reset(token)
             
