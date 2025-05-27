@@ -195,29 +195,23 @@ class OdinHttpStreamingTransport:
             )
         elif isinstance(message.root, JSONRPCNotification):
             
-            if message.root.method == "notifications/initialized" and self.supports_hermod_streaming:
-                res = self._create_streaming_hold_response(
-                    self.channel_id,
-                )
-            else:
-                #  send 202 json response
-                res = self._create_json_response(
-                    response_message=None,
-                    status_code=HTTPStatus.ACCEPTED,
-                )
-
             # TODO: trigger tasks for non-initialize notifications
-            return res            
+            self.worker.handle_mcp_notification(
+                notification=message.root,
+                channel_id=self.channel_id,
+                current_user=self.current_user,
+            )
+            return self._create_json_response(
+                response_message=None,
+                status_code=HTTPStatus.ACCEPTED,
+            )
         else:
             return self._create_error_response(
                 error_message="Invalid Request: The JSON sent is not a valid Request object.",
                 status_code=HTTPStatus.BAD_REQUEST, # 400
                 error_code=INVALID_REQUEST # Or INVALID_PARAMS if structure is okay but content is bad
             )
-            
-            
     
-
     
     def _create_error_response(
         self,

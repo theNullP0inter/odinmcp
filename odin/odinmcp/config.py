@@ -1,4 +1,4 @@
-from typing import Generic, Optional
+from typing import Generic, Optional, List
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from mcp.server.lowlevel.server import LifespanResultT
@@ -23,6 +23,7 @@ class OdenSettings(BaseSettings, Generic[LifespanResultT]):
     user_info_token: Optional[str] = "x-userinfo"
     hermod_streaming_header: Optional[str] = "x-hermod-stream"
     hermod_streaming_token_secret: str
+    hermod_zero_mq_urls: Optional[List[str]] = ["tcp://localhost:5562"]
     
     
     # state variables

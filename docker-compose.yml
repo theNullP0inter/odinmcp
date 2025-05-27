@@ -62,6 +62,7 @@ services:
     restart: always
     networks:
       - asgard_pub
+      - asgard_net
     env_file:
       - ./.env/hermod.env
     volumes:
