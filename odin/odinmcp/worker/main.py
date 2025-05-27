@@ -77,11 +77,6 @@ class OdinWorker:
 
             if type(cli_req.root) in self.mcp_server.request_handlers:
                 handler = self.mcp_server.request_handlers[type(cli_req.root)]
-                session = OdinSession(
-                    channel_id,
-                    current_user,
-                    self.mcp_server.create_initialization_options(),
-                )
                 token = None
                 try:
                     token = request_ctx.set(

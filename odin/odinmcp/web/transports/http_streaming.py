@@ -51,7 +51,7 @@ class OdinHttpStreamingTransport:
         self.worker = worker
         self.supports_hermod_streaming = getattr(request.state, settings.supports_hermod_streaming_state, False)
         self.current_user = getattr(request.state, settings.current_user_state)
-        self.channel_id = self.request.headers.get(MCP_SESSION_ID_HEADER) or self.create_new_user_channel()
+        self.channel_id = self.request.headers.get(MCP_SESSION_ID_HEADER, None)
     
     
     def get_initialize_result(self) -> InitializeResult:
@@ -165,7 +165,9 @@ class OdinHttpStreamingTransport:
                 jsonrpc=message.root.jsonrpc or "2.0" 
             )
             
-            self.channel_id = self.create_new_user_channel()
+            self.channel_id = self.create_new_user_channel(
+                initialization_params=message.root.params
+            )
             return self._create_json_response(
                 response_message,
                 status_code=HTTPStatus.OK,
@@ -291,7 +293,10 @@ class OdinHttpStreamingTransport:
             headers=response_headers,
         )
 
-    def create_new_user_channel(self) -> str:
+    def create_new_user_channel(
+        self,
+        initialization_params: dict
+    ) -> str:
         """Create a new user channel"""
         user : CurrentUser = getattr(self.request.state, settings.current_user_state, None)
-        return user.create_hermod_streaming_token()
+        return user.create_hermod_streaming_token(initialization_params)

@@ -22,30 +22,30 @@ from mcp.server.session import ServerSession
 from mcp.server.lowlevel.server import LifespanResultT
 from mcp.server.models import InitializationOptions
 from mcp.types import InitializeRequestParams
-
+from odinmcp.models.auth import CurrentUserT
 
 
 
 # TODO: create a custom session
 class OdinSession( ServerSession ):
     
+    _client_params: InitializeRequestParams | None = None
+    
     def __init__(
         self,
         channel_id:str,
-        current_user: Any,
-        init_options: InitializationOptions,
-    
+        current_user: CurrentUserT,
+        init_options: InitializationOptions,    
     ) -> None:
         self._init_options = init_options
-        self._current_user = current_user        
+        self._current_user = current_user   
+        self._channel_id = channel_id
+
+        client_params =self._current_user.get_client_params(self._channel_id)
+        self._client_params = client_params        
         
-    # TODO[Later]: Override below
-    # async def send_request()
-    # async def send_notification()
-    # async def _send_response()
-    # async def _receive_loop() -> raise NotImplementedError
-    # async def _handle_incoming -> raise NotImplementedError
-    # async def run( -> raise NotImplementedError
+    
+
     async def send_request(
         self,
         request: SendRequestT,

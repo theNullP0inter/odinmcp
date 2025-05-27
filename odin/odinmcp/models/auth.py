@@ -1,8 +1,9 @@
 from pydantic import BaseModel, Field
-from typing import Any, Dict, List
+from typing import Any, Dict, List, TypeVar
 import jwt
 import time
 from odinmcp.config import settings
+
 
 class Organization(BaseModel):
     id: str
@@ -27,10 +28,11 @@ class CurrentUser(BaseModel):
         
     # method to create a streaming token for the user
     # {user_id + session_id + timestamp}
-    def create_hermod_streaming_token(self) -> str:
+    def create_hermod_streaming_token(self, initialization_params: dict) -> str:
         payload = {
             "user_id": self.user_id,
             "session_id": self.session_id,
+            "client_params": initialization_params,
             "created_at": int(time.time()),
         }
         token = jwt.encode(payload, settings.hermod_streaming_token_secret, algorithm="HS256")
@@ -44,6 +46,15 @@ class CurrentUser(BaseModel):
             payload = jwt.decode(token, settings.hermod_streaming_token_secret, algorithms=["HS256"])
             if payload["user_id"] != self.user_id or payload["session_id"] != self.session_id:
                 return False
-            return True
+            return payload
         except Exception as e:
             return False
+
+    def get_client_params(self, token:str) -> dict:
+        payload = self.validate_hermod_streaming_token(token)
+        if not payload:
+            return None
+        return payload["client_params"]
+        
+
+CurrentUserT = TypeVar("CurrentUserT", bound=CurrentUser)
