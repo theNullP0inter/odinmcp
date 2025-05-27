@@ -59,22 +59,7 @@ class OdinHttpStreamingTransport:
             notification_options=NotificationOptions(),
             experimental_capabilities={},
         )
-        
-        # TODO: Remove the capability manipulation once server is fully implemented
-        #  Note: this is a placeholder for the actual settings to make it work with the mcp-inspector
-        
-        mcp_initialization_options.capabilities.logging = LoggingCapability()
-        mcp_initialization_options.capabilities.prompts = PromptsCapability(
-            listChanged=True,
-        )
-        mcp_initialization_options.capabilities.resources = ResourcesCapability(
-            subscribe=True,
-            listChanged=True,
-        )
-        mcp_initialization_options.capabilities.tools = ToolsCapability(
-            listChanged=True,
-        )
-        
+
         return InitializeResult(
                 protocolVersion=LATEST_PROTOCOL_VERSION,
                 capabilities=mcp_initialization_options.capabilities,
@@ -173,6 +158,7 @@ class OdinHttpStreamingTransport:
         if isinstance(message.root, JSONRPCRequest) and message.root.method == "initialize":
             req_id = message.root.id
             
+            # TODO: check_client_capability -> sample method exists in ServerSession 
             response_message = JSONRPCResponse(
                 id=req_id,
                 result=self.get_initialize_result().model_dump(by_alias=True, exclude_none=True),

@@ -1,6 +1,7 @@
 amqp==5.3.1
 annotated-types==0.7.0
 anyio==4.9.0
+asgiref==3.8.1
 billiard==4.2.1
 celery==5.5.2
 certifi==2025.1.31
