@@ -27,7 +27,7 @@ from odinmcp.models.auth import CurrentUserT
 
 
 # TODO: create a custom session
-class OdinSession( ServerSession ):
+class OdinWorkerSession( ServerSession ):
     
     _client_params: InitializeRequestParams | None = None
     

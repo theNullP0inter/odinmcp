@@ -21,7 +21,7 @@ from mcp.server.session import ServerSession
 from mcp.server.lowlevel.server import LifespanResultT, request_ctx
 from mcp.server.models import InitializationOptions
 from mcp.types import ErrorData
-from odinmcp.session import OdinSession
+from odinmcp.worker.session import OdinWorkerSession
 from mcp.shared.context import RequestContext
 from mcp.shared.exceptions import McpError
 
@@ -67,7 +67,7 @@ class OdinWorker:
         # Option 3: replicate _handle_request & create custom session
         async with AsyncExitStack() as stack:
             lifespan_context = await stack.enter_async_context(self.mcp_server.lifespan(self.mcp_server))
-            session = OdinSession(
+            session = OdinWorkerSession(
                 channel_id,
                 current_user,
                 self.mcp_server.create_initialization_options(),

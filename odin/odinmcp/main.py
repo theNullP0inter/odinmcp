@@ -55,7 +55,7 @@ from mcp.types import (
     TextContent,
     ToolAnnotations,
 )
-from odinmcp.session import OdinSession
+from odinmcp.worker.session import OdinWorkerSession
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterable, Sequence
 from pydantic.networks import AnyUrl
 from mcp.server.lowlevel.helper_types import ReadResourceContents
@@ -148,7 +148,7 @@ class OdinMCP:
             for info in tools
         ]
 
-    def get_context(self) -> Context[OdinSession, object]:
+    def get_context(self) -> Context[OdinWorkerSession, object]:
         """
         Returns a Context object. Note that the context will only be valid
         during a request; outside a request, most methods will error.
