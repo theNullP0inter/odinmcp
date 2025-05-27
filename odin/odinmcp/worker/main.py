@@ -60,14 +60,8 @@ class OdinWorker:
         return async_to_sync(self.task_async_handle_mcp_request)(request, channel_id, current_user)
 
     async def task_async_handle_mcp_request(self, request: str, channel_id: str, current_user: str) -> None:
-        
-        
-        current_user = self.current_user_model.model_validate_json(current_user)
-        
 
-        print("self.mcp_server.request_handlers: ", self.mcp_server.request_handlers)
-        
-        # Option 3: replicate _handle_request & create custom session
+        current_user = self.current_user_model.model_validate_json(current_user)
         async with AsyncExitStack() as stack:
             lifespan_context = await stack.enter_async_context(self.mcp_server.lifespan(self.mcp_server))
             session = OdinWorkerSession(
@@ -91,10 +85,8 @@ class OdinWorker:
                         )
                     ) 
                     response = await handler(cli_req.root)
-                    print("response success: ", response)
                 except McpError as err:
                     response = err.error
-                    print("response mcp error: ", response)
                 except Exception as err:
                     response = ErrorData(code=0, message=str(err), data=None)
                     print("response error: ", response)
