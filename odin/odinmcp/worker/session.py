@@ -7,7 +7,7 @@ from mcp.types import (
 from mcp.shared.session import (
     SendRequestT, SendResultT, SendNotificationT, ReceiveResultT, ProgressFnT, RequestId
 )
-from mcp.shared.message import MessageMetadata, SessionMessage
+from mcp.shared.message import MessageMetadata, SessionMessage, ServerMessageMetadata
 from mcp.server.lowlevel.server import Server as MCPServer
 from celery import Celery
 from odinmcp.config import settings
@@ -26,20 +26,13 @@ from odinmcp.models.auth import CurrentUserT
 from odinmcp.config import settings
 import zmq
 import json
-from mcp.types import ErrorData
+from mcp.types import ErrorData, JSONRPCNotification
 import requests
 import time
 from pydantic import BaseModel
 
 
 
-# hermod_socket.connect("tcp://hermod:5562")
-# time.sleep(0.1)
-
-# for url in settings.hermod_zero_mq_urls:
-#     print(f"Connecting to hermod zero mq url: {url}")
-#     hermod_socket.connect(url)
-    
 
 
 class OdinWorkerSession( ServerSession ):
@@ -67,10 +60,10 @@ class OdinWorkerSession( ServerSession ):
             hermod_socket.connect(url)
         return hermod_socket
     
-    def send_sse_message(self, message: BaseModel) -> None:
+    def send_sse_message(self, message: SessionMessage) -> None:
         hermod_socket = self.get_hermod_socket()
         
-        content = "event: message\ndata: " + message.model_dump_json(by_alias=True, exclude_none=True)
+        content = "event: message\ndata: " + message.message.model_dump_json(by_alias=True, exclude_none=True)
         item = {
             "channel": self._channel_id,
             "formats":{
@@ -97,7 +90,7 @@ class OdinWorkerSession( ServerSession ):
         metadata: MessageMetadata = None,
         progress_callback: ProgressFnT | None = None,
     ) -> ReceiveResultT:
-        print(f"send_request called with request={request}, result_type={result_type}, request_read_timeout_seconds={request_read_timeout_seconds}, metadata={metadata}, progress_callback={progress_callback}")
+        # TODO: add support for progress_callback
         pass
 
 
@@ -107,7 +100,17 @@ class OdinWorkerSession( ServerSession ):
         related_request_id: RequestId | None = None,
     ) -> None:
         print(f"send_notification called with notification={notification}, metadata={metadata}")
-        pass
+        jsonrpc_notification = JSONRPCNotification(
+            jsonrpc="2.0",
+            **notification.model_dump(by_alias=True, mode="json", exclude_none=True),
+        )
+        session_message = SessionMessage(
+            message=JSONRPCMessage(jsonrpc_notification),
+            metadata=ServerMessageMetadata(related_request_id=related_request_id)
+            if related_request_id
+            else None,
+        )
+        self.send_sse_message(session_message)
 
     async def _send_response(
         self,
@@ -126,8 +129,8 @@ class OdinWorkerSession( ServerSession ):
                 ),
             )
             message = JSONRPCMessage(jsonrpc_response)
-        
-        self.send_sse_message(message)
+        session_message = SessionMessage(message=message)
+        self.send_sse_message(session_message)
 
     
     # Below methods are used with server.run() . Since we are not using server.run() we are not implementing them

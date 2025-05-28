@@ -33,7 +33,8 @@ from odinmcp.constants import (
     CONTENT_TYPE_SSE,
     HERMOD_GRIP_HOLD_HEADER,
     HERMOD_GRIP_HOLD_MODE,
-    HERMOD_GRIP_CHANNEL_HEADER
+    HERMOD_GRIP_CHANNEL_HEADER,
+    HERMOD_GRIP_KEEP_ALIVE_HEADER,
 )
 from odinmcp.worker import OdinWorker
 
@@ -158,7 +159,6 @@ class OdinHttpStreamingTransport:
         if isinstance(message.root, JSONRPCRequest) and message.root.method == "initialize":
             req_id = message.root.id
             
-            # TODO: check_client_capability -> sample method exists in ServerSession 
             response_message = JSONRPCResponse(
                 id=req_id,
                 result=self.get_initialize_result().model_dump(by_alias=True, exclude_none=True),
@@ -182,7 +182,6 @@ class OdinHttpStreamingTransport:
         
             
         if isinstance(message.root, JSONRPCRequest):
-            # TODO: trigger tasks for non-initialize requests
             self.worker.handle_mcp_request(
                 request=message.root, 
                 channel_id=self.channel_id,
@@ -194,8 +193,6 @@ class OdinHttpStreamingTransport:
                 status_code=HTTPStatus.ACCEPTED,
             )
         elif isinstance(message.root, JSONRPCNotification):
-            
-            # TODO: trigger tasks for non-initialize notifications
             self.worker.handle_mcp_notification(
                 notification=message.root,
                 channel_id=self.channel_id,
@@ -203,6 +200,18 @@ class OdinHttpStreamingTransport:
             )
             return self._create_json_response(
                 response_message=None,
+                status_code=HTTPStatus.ACCEPTED,
+            )
+        elif isinstance(message.root, JSONRPCResponse):
+            # TODO: handle this properly
+            return self._create_json_response(
+                response_message=message.root,
+                status_code=HTTPStatus.ACCEPTED,
+            )
+        elif isinstance(message.root, JSONRPCError):
+            # TODO: handle this properly
+            return self._create_json_response(
+                response_message=message.root,
                 status_code=HTTPStatus.ACCEPTED,
             )
         else:
@@ -273,11 +282,11 @@ class OdinHttpStreamingTransport:
             CONTENT_TYPE_HEADER: CONTENT_TYPE_SSE, 
             HERMOD_GRIP_HOLD_HEADER: HERMOD_GRIP_HOLD_MODE,
             HERMOD_GRIP_CHANNEL_HEADER: channel_id,
+            HERMOD_GRIP_KEEP_ALIVE_HEADER: f"\\n; format=cstring; timeout={settings.hermod_streaming_keep_alive_timeout}",
             MCP_SESSION_ID_HEADER: channel_id,
             ACCEPT_HEADER: CONTENT_TYPE_JSON,
         }
-        # TODO: generate channel id
-        # TODO: keep-alive headers
+        
         if headers:
             response_headers.update(headers)
 

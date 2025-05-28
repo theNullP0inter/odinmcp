@@ -8,6 +8,7 @@ ACCEPT_HEADER = "Accept"
 HERMOD_GRIP_HOLD_HEADER = "Grip-Hold"
 HERMOD_GRIP_HOLD_MODE = "stream"
 HERMOD_GRIP_CHANNEL_HEADER = "Grip-Channel"
+HERMOD_GRIP_KEEP_ALIVE_HEADER = "Grip-Keep-Alive"
 
 
 # Content types
