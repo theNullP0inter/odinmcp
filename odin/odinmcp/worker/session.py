@@ -91,7 +91,22 @@ class OdinWorkerSession( ServerSession ):
         progress_callback: ProgressFnT | None = None,
     ) -> ReceiveResultT:
         # TODO: add support for progress_callback
-        pass
+        # TODO: add support for request_read_timeout_seconds
+        # Prepare request data
+        request_id = self._request_id
+        self._request_id += 1
+
+        request_data = request.model_dump(by_alias=True, mode="json", exclude_none=True)
+        jsonrpc_request = JSONRPCRequest(
+            jsonrpc="2.0",
+            id=request_id,
+            **request_data,
+        )
+        session_message = SessionMessage(
+            message=JSONRPCMessage(jsonrpc_request),
+            metadata=metadata,
+        )
+        self.send_sse_message(session_message)
 
 
     async def send_notification(
@@ -99,7 +114,6 @@ class OdinWorkerSession( ServerSession ):
         notification: SendNotificationT,
         related_request_id: RequestId | None = None,
     ) -> None:
-        print(f"send_notification called with notification={notification}, metadata={metadata}")
         jsonrpc_notification = JSONRPCNotification(
             jsonrpc="2.0",
             **notification.model_dump(by_alias=True, mode="json", exclude_none=True),

@@ -203,13 +203,13 @@ class OdinHttpStreamingTransport:
                 status_code=HTTPStatus.ACCEPTED,
             )
         elif isinstance(message.root, JSONRPCResponse):
-            # TODO: handle this properly
+            # TODO: handle this properly. Trigger a task to process the response
             return self._create_json_response(
                 response_message=message.root,
                 status_code=HTTPStatus.ACCEPTED,
             )
         elif isinstance(message.root, JSONRPCError):
-            # TODO: handle this properly
+            # TODO: handle this properly. Trigger a task to process the error/response
             return self._create_json_response(
                 response_message=message.root,
                 status_code=HTTPStatus.ACCEPTED,
