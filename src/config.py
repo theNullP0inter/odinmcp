@@ -22,7 +22,7 @@ class OdenSettings(BaseSettings, Generic[LifespanResultT]):
     # authentication and streaming
     user_info_token: Optional[str] = "x-userinfo"
     hermod_streaming_header: Optional[str] = "x-hermod-stream"
-    hermod_streaming_token_secret: str
+    hermod_streaming_token_secret: Optional[str] = "secret"
     hermod_zero_mq_urls: Optional[List[str]] = ["tcp://localhost:5562"]
     hermod_streaming_keep_alive_timeout: Optional[int] = 10
     
@@ -32,7 +32,7 @@ class OdenSettings(BaseSettings, Generic[LifespanResultT]):
     supports_hermod_streaming_state: Optional[str] = "supports_hermod_streaming"
     
     # celery settngs
-    celery_broker: str
-    celery_backend: str
+    celery_broker: Optional[str] = "redis://localhost:6379/0"
+    celery_backend: Optional[str] = "redis://localhost:6379/0"
     
 settings = OdenSettings()

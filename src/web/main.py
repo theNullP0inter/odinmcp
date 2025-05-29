@@ -1,14 +1,14 @@
-from odinmcp.web.transports.http_streaming import OdinHttpStreamingTransport
-from odinmcp.web.middleware.heimdall import HeimdallCurrentUserMiddleware
-from odinmcp.web.middleware.hermod import HermodStreamingMiddleware
-from odinmcp.config import settings
+from web.transports.http_streaming import OdinHttpStreamingTransport
+from web.middleware.heimdall import HeimdallCurrentUserMiddleware
+from web.middleware.hermod import HermodStreamingMiddleware
+from config import settings
 from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import Response
 from starlette.routing import Route
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware import Middleware
-from odinmcp.models.auth import CurrentUser
+from models.auth import CurrentUser
 from mcp.server.lowlevel.server import Server as MCPServer
 from typing import Type, List
 from celery import Celery

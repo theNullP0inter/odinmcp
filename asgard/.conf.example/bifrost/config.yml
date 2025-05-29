@@ -3,7 +3,7 @@ _transform: true
 
 services:
 - name: heimdall
-  url: http://heimdall:8080
+  url: http://localhost:8080
   routes:
   - name: heimdall
     paths:
@@ -28,7 +28,7 @@ services:
 
 
 - name: odin
-  url: http://odin:80
+  url: http://localhost:80
   plugins:
   - name: oidc
     service: odin
@@ -66,7 +66,7 @@ services:
 # It always hits URL_BASE/.well-known/oauth-authorization-server.
 # We will use bifrost to redirect it to heimdall correctly.
 - name: odinmcp-auth-well-known-config 
-  url: http://heimdall:8080/realms/asgard/.well-known/openid-configuration
+  url: http://localhost:8080/realms/asgard/.well-known/openid-configuration
   routes:
   - name: odinmcp-auth-well-known-config
     paths:

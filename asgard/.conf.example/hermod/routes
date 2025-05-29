@@ -1,0 +1,3 @@
+*,header=X-HERMOD-STREAM:true localhost:8000
+* zhttpreq/tcp://localhost:5560
+* zhttpreq/tcp://localhost:5562

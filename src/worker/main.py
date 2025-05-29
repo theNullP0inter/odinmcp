@@ -11,10 +11,10 @@ from mcp.shared.session import (
 from mcp.shared.message import MessageMetadata, SessionMessage
 from mcp.server.lowlevel.server import Server as MCPServer
 from celery import Celery, states
-from odinmcp.constants import MCP_CELERY_PROGRESS_STATE
-from odinmcp.config import settings
+from constants import MCP_CELERY_PROGRESS_STATE
+from config import settings
 from mcp.types import JSONRPCRequest, JSONRPCNotification, JSONRPCResponse, JSONRPCError
-from odinmcp.models.auth import CurrentUser
+from models.auth import CurrentUser
 import json
 from mcp.client.session import ClientSession
 from asgiref.sync import async_to_sync
@@ -24,7 +24,7 @@ from mcp.server.session import ServerSession
 from mcp.server.lowlevel.server import LifespanResultT, request_ctx
 from mcp.server.models import InitializationOptions
 from mcp.types import ErrorData
-from odinmcp.worker.session import OdinWorkerSession
+from worker.session import OdinWorkerSession
 from mcp.shared.context import RequestContext
 from mcp.shared.exceptions import McpError
 # from celery.task.control import revoke
@@ -46,23 +46,23 @@ class OdinWorker:
     
     def handle_mcp_request(self, request: JSONRPCRequest, channel_id: str, current_user: CurrentUser):
         self.worker.send_task(
-            "odinmcp.handle_mcp_request", 
+            "handle_mcp_request", 
             args=(request.model_dump_json(by_alias=True, exclude_none=True), channel_id, current_user.model_dump_json(by_alias=True, exclude_none=True))
         )
     
     def handle_mcp_notification(self, notification: JSONRPCNotification, channel_id: str, current_user: CurrentUser):
-        self.worker.send_task("odinmcp.handle_mcp_notification", args=(notification.model_dump_json(by_alias=True, exclude_none=True), channel_id, current_user.model_dump_json(by_alias=True, exclude_none=True)))
+        self.worker.send_task("handle_mcp_notification", args=(notification.model_dump_json(by_alias=True, exclude_none=True), channel_id, current_user.model_dump_json(by_alias=True, exclude_none=True)))
     
     def handle_mcp_response(self, response: Union[JSONRPCResponse, JSONRPCError], channel_id: str, current_user: CurrentUser):
         self.worker.send_task(
-            "odinmcp.handle_mcp_response", 
+            "handle_mcp_response", 
             args=(response.model_dump_json(by_alias=True, exclude_none=True), channel_id, current_user.model_dump_json(by_alias=True, exclude_none=True)),
             task_id=self._generate_response_task_id(response.id, current_user, channel_id)
         )
 
     def terminate_session(self, channel_id: str, current_user: CurrentUser):
         self.worker.send_task(
-            "odinmcp.terminate_session", 
+            "terminate_session", 
             args=(channel_id, current_user.model_dump_json(by_alias=True, exclude_none=True))
         )
 
@@ -72,10 +72,10 @@ class OdinWorker:
             broker=settings.celery_broker,
             backend=settings.celery_backend
         )
-        worker.task(self.task_handle_mcp_request, name="odinmcp.handle_mcp_request")
-        worker.task(self.task_handle_mcp_notification, name="odinmcp.handle_mcp_notification")
-        worker.task(self.task_handle_mcp_response, name="odinmcp.handle_mcp_response")
-        worker.task(self.task_terminate_session, name="odinmcp.terminate_session")
+        worker.task(self.task_handle_mcp_request, name="handle_mcp_request")
+        worker.task(self.task_handle_mcp_notification, name="handle_mcp_notification")
+        worker.task(self.task_handle_mcp_response, name="handle_mcp_response")
+        worker.task(self.task_terminate_session, name="terminate_session")
         return worker
 
     def _generate_response_task_id(self, request_id: str, current_user: CurrentUser, channel_id: str) -> str:

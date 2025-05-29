@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field
 from typing import Any, Dict, List, TypeVar
 import jwt
 import time
-from odinmcp.config import settings
+from config import settings
 
 
 class Organization(BaseModel):

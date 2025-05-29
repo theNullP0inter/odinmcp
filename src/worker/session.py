@@ -13,10 +13,10 @@ from mcp.shared.session import (
 from mcp.shared.message import MessageMetadata, SessionMessage, ServerMessageMetadata
 from mcp.server.lowlevel.server import Server as MCPServer
 from celery import Celery
-from odinmcp.constants import MCP_CELERY_PROGRESS_STATE
-from odinmcp.config import settings
+from constants import MCP_CELERY_PROGRESS_STATE
+from config import settings
 from mcp.types import JSONRPCRequest
-from odinmcp.models.auth import CurrentUser
+from models.auth import CurrentUser
 import json
 from mcp.client.session import ClientSession
 from asgiref.sync import async_to_sync
@@ -26,8 +26,8 @@ from mcp.server.session import ServerSession
 from mcp.server.lowlevel.server import LifespanResultT
 from mcp.server.models import InitializationOptions
 from mcp.types import InitializeRequestParams, JSONRPCResponse, JSONRPCError, JSONRPCMessage
-from odinmcp.models.auth import CurrentUserT
-from odinmcp.config import settings
+from models.auth import CurrentUserT
+from config import settings
 import zmq
 import json
 from mcp.types import ErrorData, JSONRPCNotification

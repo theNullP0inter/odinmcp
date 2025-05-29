@@ -1,3 +1,0 @@
-*,header=X-HERMOD-STREAM:true bifrost:8000
-* zhttpreq/tcp://hermod:5560
-* zhttpreq/tcp://hermod:5562
