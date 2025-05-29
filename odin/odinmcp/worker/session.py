@@ -1,6 +1,6 @@
 
 import hashlib
-from typing import Any, Type
+from typing import Any, Callable, Type
 from datetime import timedelta
 import uuid
 from mcp.shared.exceptions import McpError
@@ -48,10 +48,12 @@ class OdinWorkerSession( ServerSession ):
         channel_id:str,
         current_user: CurrentUserT,
         init_options: InitializationOptions,    
+        task_id_generator: Callable[[str, CurrentUserT, str], str],
     ) -> None:
         self._init_options = init_options
         self._current_user = current_user   
         self._channel_id = channel_id
+        self._task_id_generator = task_id_generator
 
         client_params =self._current_user.get_client_params(self._channel_id)
         self._client_params = client_params        
@@ -110,7 +112,8 @@ class OdinWorkerSession( ServerSession ):
         )
         self.send_sse_message(session_message)
         
-        task_id = hashlib.sha256(f"request_{self._current_user.user_id}_{self._channel_id}_{request_id}".encode()).hexdigest()
+        task_id = self._task_id_generator(request_id, self._current_user, self._channel_id)
+
         start_time = time.time()
         while True:
             result  = AsyncResult(task_id)
