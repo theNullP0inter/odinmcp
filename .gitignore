@@ -15,7 +15,7 @@ dependency-reduced-pom.xml
 .vscode
 .swagger*
 src/main/resources/META-INF/jpa-changelog-phasetwo-full.xml
-test_app/
+test_app/*
 *.env
 .env/
 .conf/
