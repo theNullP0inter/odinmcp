@@ -109,8 +109,8 @@ def setup_asgard(
             shutil.copy2(s, d)
     typer.echo(f"Copied contents of {src_dir} to {target_dir}")
 
-    # Handle .conf.example -> .conf and .env.example -> .env
-    for example_file, target_file in [(".conf.example", ".conf"), (".env.example", ".env")]:
+    # Handle conf.example -> .conf and env.example -> .env
+    for example_file, target_file in [("conf.example", ".conf"), ("env.example", ".env")]:
         example_path = os.path.join(target_dir, example_file)
         target_path = os.path.join(target_dir, target_file)
         if os.path.exists(example_path):

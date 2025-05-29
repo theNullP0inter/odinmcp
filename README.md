@@ -1,6 +1,7 @@
 # Outrageously Distributed Infrastructure Network
 
 ```
+odinmcp setup_asgard
 
 odinmcp run_web test_app.main:web
 
@@ -15,7 +16,6 @@ Asgard is designed as a side project to explore and learn the possibilities of u
 ## Table of Contents
 
 - [Overview](#overview)
-- [What is MCP?](#what-is-mcp)
 - [Problem Statement](#problem-statement)
 - [Architecture](#architecture)
   - [Authentication](#authentication)
@@ -33,7 +33,6 @@ Asgard is designed as a side project to explore and learn the possibilities of u
   3. [Configure Keycloak](#3-configure-keycloak)
   4. [Open Loki](#4-open-loki)
   5. [Connect to the OdinMCP Server Using the Inspector](#5-connect-to-the-odinmcp-server-using-the-inspector)
-- [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [License](#license)
 - [Acknowledgements](#acknowledgements)
@@ -274,26 +273,6 @@ Add the I.P address of the client( In the error ) to the `trusted_hosts` list in
   ![Connected](./docs/connect_sse_4.png)
 
 
-## Roadmap
-
-Future enhancements for Asgard include:
-
-- **Authentication Enhancements:**  
-  - ~~Setup heimdall/keycloak with seed config.~~
-  - ~~Setup interface between Heimdall and OdinMCP using OIDC.~~
-  - Setup mcp inspector in docker-compose.
-
-- **Streaming Improvements:**  
-  - Setup hermod/pushpin with GRIP protocol.
-  - Setup hermod/pushpin with ZeroMQ.
-  - Setup interface between hermod and OdinMCP using GRIP protocol.
-  - Setup interface between hermod and OdinMCP using ZeroMQ.
-
-- **Build UI for Asgard:**  
-  - Build a simple UI for Asgard to manage organizations, users, and sessions.
-  
-- **OdinMCP Python Library:**  
-  Refactoring OdinMCP into its own client library to better abstract MCP complexities and simplify integrations.
 
 
 ## Contributing
