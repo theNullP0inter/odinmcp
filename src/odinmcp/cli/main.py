@@ -1,5 +1,6 @@
 
 import importlib
+from starlette.applications import Starlette
 import typer
 import asyncio
 
@@ -30,7 +31,9 @@ def run_web(app_path: str, params: List[str] = typer.Argument(None)):
     asgi_app = getattr(module, app_attr, None)
     if asgi_app is None:
         raise typer.BadParameter(f"Module '{module_path}' does not have attribute '{app_attr}'")
-
+    if not isinstance(asgi_app, Starlette):
+        raise typer.BadParameter(f"Attribute '{app_attr}' is not a Starlette app")
+    
     # Parse params as key-value pairs
     extra_kwargs = {}
     if params:
@@ -61,7 +64,28 @@ def run_web(app_path: str, params: List[str] = typer.Argument(None)):
     asyncio.run(server.serve())
 
 
-@app.command(name="version")
-def version():
-    print("OdinMCP version 0.1.0")
+@app.command(name="run_worker")
+def run_worker(app_path: str, params: List[str] = typer.Argument(None)):
+    """
+    Run a worker app with celery. 
+    app_path should be in the format 'module:attr', e.g., 'test_app.main:worker'
+    Any additional CLI arguments will be passed as kwargs to celery, e.g.:
+    odinmcp run_worker test_app.main:worker --broker redis://localhost:6379/0 --result-backend redis://localhost:6379/0
+    """
+
+    from celery import Celery
+    import importlib
     
+    if ':' not in app_path:
+        raise typer.BadParameter("app_path must be in the format 'module:attr', e.g., 'test_app.main:worker'")
+    
+    module_path, app_attr = app_path.split(':', 1)
+    module = importlib.import_module(module_path)
+    celery_app: Celery = getattr(module, app_attr, None)
+    if celery_app is None:
+        raise typer.BadParameter(f"Module '{module_path}' does not have attribute '{app_attr}'")
+    if not isinstance(celery_app, Celery):
+        raise typer.BadParameter(f"Attribute '{app_attr}' is not a Celery app")
+
+    argv = ["worker"] + (params or [])
+    celery_app.worker_main(argv=argv)

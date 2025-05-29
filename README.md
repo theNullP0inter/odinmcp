@@ -246,7 +246,7 @@ Follow these steps to connect to the MCP server for your organization (`org-1`):
 
 **Note:** If you get an error like below in uyour docker logs for Heimdall:
 ```
-heimdall       | 2025-05-10 15:23:17,664 WARN  [org.keycloak.events] (executor-thread-1) type="CLIENT_REGISTER_ERROR", realmId="7a1303f6-e6b0-482c-8135-0efe346054df", realmName="asgard", clientId="null", userId="null", ipAddress="172.21.0.2", error="not_allowed", client_registration_policy="Trusted Hosts"
+heimdall       | 2025-05-10 15:23:17,664 WARN  [org.keycloak.events] (executor-thread-1) type="CLIENT_REGISTER_ERROR", realmId="7a1303f6-e6b0-482c-8135-0efe346054df", realmName="asgard", clientId="null", userId="null", ipAddress="127.0.0.1", error="not_allowed", client_registration_policy="Trusted Hosts"
 ```
 
 Add the I.P address of the client( In the error ) to the `trusted_hosts` list in the Keycloak realm settings. This allows the client to register and connect successfully.

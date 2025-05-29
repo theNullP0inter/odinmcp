@@ -1813,8 +1813,7 @@
             "true"
           ],
           "trusted-hosts": [
-            "172.21.0.2",
-            "172.21.0.3"
+            "127.0.0.1"
           ],
           "client-uris-must-match": [
             "false"
