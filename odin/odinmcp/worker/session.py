@@ -48,12 +48,12 @@ class OdinWorkerSession( ServerSession ):
         channel_id:str,
         current_user: CurrentUserT,
         init_options: InitializationOptions,    
-        task_id_generator: Callable[[str, CurrentUserT, str], str],
+        response_task_id_generator: Callable[[str, CurrentUserT, str], str],
     ) -> None:
         self._init_options = init_options
         self._current_user = current_user   
         self._channel_id = channel_id
-        self._task_id_generator = task_id_generator
+        self._response_task_id_generator = response_task_id_generator
 
         client_params =self._current_user.get_client_params(self._channel_id)
         self._client_params = client_params        
@@ -112,11 +112,12 @@ class OdinWorkerSession( ServerSession ):
         )
         self.send_sse_message(session_message)
         
-        task_id = self._task_id_generator(request_id, self._current_user, self._channel_id)
+        # TODO: listen for progress notifications and call progress_callback
 
+        response_task_id = self._response_task_id_generator(request_id, self._current_user, self._channel_id)
         start_time = time.time()
         while True:
-            result  = AsyncResult(task_id)
+            result  = AsyncResult(response_task_id)
             if result.successful() or result.failed():
                 break            
             if time.time() - start_time > request_read_timeout_seconds.total_seconds():

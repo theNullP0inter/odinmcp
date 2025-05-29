@@ -53,7 +53,7 @@ class OdinWorker:
         self.worker.send_task(
             "odinmcp.handle_mcp_response", 
             args=(response.model_dump_json(by_alias=True, exclude_none=True), channel_id, current_user.model_dump_json(by_alias=True, exclude_none=True)),
-            task_id=self._generate_task_id(response.id, current_user, channel_id)
+            task_id=self._generate_response_task_id(response.id, current_user, channel_id)
         )
     
     
@@ -69,8 +69,8 @@ class OdinWorker:
         worker.task(self.task_handle_mcp_response, name="odinmcp.handle_mcp_response")
         return worker
 
-    def _generate_task_id(self, request_id: str, current_user: CurrentUser, channel_id: str) -> str:
-        return hashlib.sha256(f"request_{current_user.user_id}_{channel_id}_{request_id}".encode()).hexdigest()
+    def _generate_response_task_id(self, request_id: str, current_user: CurrentUser, channel_id: str) -> str:
+        return hashlib.sha256(f"response_{current_user.user_id}_{channel_id}_{request_id}".encode()).hexdigest()
 
     def task_handle_mcp_request(self, request: str, channel_id: str, current_user: str) -> None:
         return async_to_sync(self.task_async_handle_mcp_request)(request, channel_id, current_user)
@@ -84,7 +84,7 @@ class OdinWorker:
                 channel_id,
                 current_user,
                 self.mcp_server.create_initialization_options(),
-                task_id_generator=self._generate_task_id,
+                response_task_id_generator=self._generate_response_task_id,
             )
             rpc_request = JSONRPCRequest.model_validate_json(request)
             cli_req = ClientRequest(json.loads(request))
@@ -128,7 +128,7 @@ class OdinWorker:
 
         if isinstance(cli_notif.root, CancelledNotification):
             cancelled_id = cli_notif.root.params.requestId
-            task_id = self._generate_task_id(cancelled_id, current_user, channel_id)
+            task_id = self._generate_response_task_id(cancelled_id, current_user, channel_id)
             task = AsyncResult(task_id)
             
             if not (task.successful() or task.failed()):
