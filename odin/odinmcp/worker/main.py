@@ -45,7 +45,10 @@ class OdinWorker:
 
     
     def handle_mcp_request(self, request: JSONRPCRequest, channel_id: str, current_user: CurrentUser):
-        self.worker.send_task("odinmcp.handle_mcp_request", args=(request.model_dump_json(by_alias=True, exclude_none=True), channel_id, current_user.model_dump_json(by_alias=True, exclude_none=True)))
+        self.worker.send_task(
+            "odinmcp.handle_mcp_request", 
+            args=(request.model_dump_json(by_alias=True, exclude_none=True), channel_id, current_user.model_dump_json(by_alias=True, exclude_none=True))
+        )
     
     def handle_mcp_notification(self, notification: JSONRPCNotification, channel_id: str, current_user: CurrentUser):
         self.worker.send_task("odinmcp.handle_mcp_notification", args=(notification.model_dump_json(by_alias=True, exclude_none=True), channel_id, current_user.model_dump_json(by_alias=True, exclude_none=True)))
@@ -58,7 +61,10 @@ class OdinWorker:
         )
 
     def terminate_session(self, channel_id: str, current_user: CurrentUser):
-        self.worker.send_task("odinmcp.terminate_session", args=(channel_id, current_user.model_dump_json(by_alias=True, exclude_none=True)))
+        self.worker.send_task(
+            "odinmcp.terminate_session", 
+            args=(channel_id, current_user.model_dump_json(by_alias=True, exclude_none=True))
+        )
 
     def _build_worker(self):
         worker =  Celery(
