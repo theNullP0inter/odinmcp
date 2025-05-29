@@ -56,8 +56,9 @@ class OdinWorker:
             args=(response.model_dump_json(by_alias=True, exclude_none=True), channel_id, current_user.model_dump_json(by_alias=True, exclude_none=True)),
             task_id=self._generate_response_task_id(response.id, current_user, channel_id)
         )
-    
-    
+
+    def terminate_session(self, channel_id: str, current_user: CurrentUser):
+        self.worker.send_task("odinmcp.terminate_session", args=(channel_id, current_user.model_dump_json(by_alias=True, exclude_none=True)))
 
     def _build_worker(self):
         worker =  Celery(
@@ -68,6 +69,7 @@ class OdinWorker:
         worker.task(self.task_handle_mcp_request, name="odinmcp.handle_mcp_request")
         worker.task(self.task_handle_mcp_notification, name="odinmcp.handle_mcp_notification")
         worker.task(self.task_handle_mcp_response, name="odinmcp.handle_mcp_response")
+        worker.task(self.task_terminate_session, name="odinmcp.terminate_session")
         return worker
 
     def _generate_response_task_id(self, request_id: str, current_user: CurrentUser, channel_id: str) -> str:
@@ -117,8 +119,7 @@ class OdinWorker:
                 response = ErrorData(code=0, message="Handler not found", data=None)
 
             await session._send_response(response, rpc_request.id)
-
-    
+   
     def task_handle_mcp_notification(self, notification: str, channel_id: str, current_user: str) -> None:
         return async_to_sync(self.task_async_handle_mcp_notification)(notification, channel_id, current_user)
     
@@ -154,11 +155,17 @@ class OdinWorker:
             except Exception as err:
                 pass
 
-            
-
     def task_handle_mcp_response(self, response: str, channel_id: str, current_user: str) -> None:
         return async_to_sync(self.task_async_handle_mcp_response)(response, channel_id, current_user)
     
     async def task_async_handle_mcp_response(self, response: str, channel_id: str, current_user: str) -> str:
         return response
+    
+    def task_terminate_session(self, channel_id: str, current_user: str) -> None:
+        current_user = self.current_user_model.model_validate_json(current_user)
+        session = OdinWorkerSession(channel_id, current_user, self.mcp_server.create_initialization_options())
+        session.terminate()
+        pass
+        
+        
         

@@ -115,6 +115,10 @@ class OdinHttpStreamingTransport:
                 status_code=HTTPStatus.BAD_REQUEST, # 400
                 error_code=INVALID_REQUEST
             )
+        self.worker.terminate_session(
+            channel_id=self.channel_id,
+            current_user=self.current_user
+        )
         return self._create_json_response(
             response_message=None,
             status_code=HTTPStatus.OK

@@ -66,6 +66,27 @@ class OdinWorkerSession( ServerSession ):
         for url in settings.hermod_zero_mq_urls:
             hermod_socket.connect(url)
         return hermod_socket
+
+    def terminate(self):
+        hermod_socket = self.get_hermod_socket()
+        item = {
+            "channel": self._channel_id,
+            "formats":{
+                "http-stream": {
+                    "action":"close",
+                }
+            }
+        }
+        # TODO: wait till socket is ready instead of time
+        time.sleep(0.1)
+        hermod_socket.send_multipart(
+            [
+                self._channel_id.encode(),
+                ("J" + json.dumps(item)).encode(),
+            ]
+        )
+        
+        
     
     def send_sse_message(self, message: SessionMessage) -> None:
         hermod_socket = self.get_hermod_socket()
