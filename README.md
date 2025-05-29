@@ -1,5 +1,13 @@
 # Outrageously Distributed Infrastructure Network
 
+```
+
+odinmcp run_web test_app.main:web
+
+odinmcp run_worker test_app.main:worker -- --loglevel=info
+
+```
+
 
 Asgard is designed as a side project to explore and learn the possibilities of using MCPs in a distributed environment. This project integrates several open source components to provide authentication, API gateway management, efficient streaming, and a standardized way to connect large language models (LLMs) with data sources.
 
