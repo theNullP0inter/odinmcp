@@ -7,6 +7,15 @@ authors = [
 ]
 readme = "README.md"
 requires-python = ">=3.11"
+keywords = [
+    "mcp",
+    "mcp server",
+    "mcp worker",
+    "model context protocol",
+    "odinmcp",
+    "llm",
+    "agent",
+]
 dependencies = [
     "celery[redis] (>=5.5.2,<6.0.0)",
     "mcp (>=1.9.2,<2.0.0)",
