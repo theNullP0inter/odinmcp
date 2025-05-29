@@ -80,6 +80,7 @@ class OdinMCP:
         lifespan: Optional[Callable[
             [MCPServer[LifespanResultT]], AbstractAsyncContextManager[LifespanResultT]
         ]] = default_lifespan,
+        extra_middleware:List[Middleware] = []
     ):  
         self.mcp_server = MCPServer(
             name=name,
@@ -107,6 +108,7 @@ class OdinMCP:
         self._resource_manager = ResourceManager()
         self._prompt_manager = PromptManager()
         
+        self.extra_middleware = extra_middleware
 
     @property
     def name(self) -> str:
@@ -117,10 +119,9 @@ class OdinMCP:
         return self.mcp_server.instructions
 
     def sse_app(
-        self,  
-        extra_middleware:List[Middleware] = []
+        self  
     ) -> Starlette:
-        return self.web.build(extra_middleware=extra_middleware), self.worker.get_worker()
+        return self.web.build(extra_middleware=self.extra_middleware), self.worker.get_worker()
         
 
     def _setup_handlers(self) -> None:
