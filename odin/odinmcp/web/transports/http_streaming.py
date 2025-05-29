@@ -202,14 +202,12 @@ class OdinHttpStreamingTransport:
                 response_message=None,
                 status_code=HTTPStatus.ACCEPTED,
             )
-        elif isinstance(message.root, JSONRPCResponse):
-            # TODO: handle this properly. Trigger a task to process the response
-            return self._create_json_response(
-                response_message=message.root,
-                status_code=HTTPStatus.ACCEPTED,
+        elif isinstance(message.root, JSONRPCResponse) or isinstance(message.root, JSONRPCError):
+            self.worker.handle_mcp_response(
+                response=message.root,
+                channel_id=self.channel_id,
+                current_user=self.current_user,
             )
-        elif isinstance(message.root, JSONRPCError):
-            # TODO: handle this properly. Trigger a task to process the error/response
             return self._create_json_response(
                 response_message=message.root,
                 status_code=HTTPStatus.ACCEPTED,

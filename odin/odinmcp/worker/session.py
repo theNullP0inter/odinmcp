@@ -1,6 +1,9 @@
 
+import hashlib
 from typing import Any, Type
 from datetime import timedelta
+import uuid
+from mcp.shared.exceptions import McpError
 from mcp.types import (
     ClientRequest, ServerRequest, ClientNotification, ServerNotification, ClientResult, ServerResult
 )
@@ -30,6 +33,7 @@ from mcp.types import ErrorData, JSONRPCNotification
 import requests
 import time
 from pydantic import BaseModel
+from celery.result import AsyncResult
 
 
 
@@ -86,15 +90,13 @@ class OdinWorkerSession( ServerSession ):
         self,
         request: SendRequestT,
         result_type: type[ReceiveResultT],
-        request_read_timeout_seconds: timedelta | None = None,
+        request_read_timeout_seconds: timedelta = timedelta(seconds=3),
         metadata: MessageMetadata = None,
         progress_callback: ProgressFnT | None = None,
     ) -> ReceiveResultT:
         # TODO: add support for progress_callback
-        # TODO: add support for request_read_timeout_seconds
-        # Prepare request data
-        request_id = self._request_id
-        self._request_id += 1
+        
+        request_id = str(uuid.uuid4())
 
         request_data = request.model_dump(by_alias=True, mode="json", exclude_none=True)
         jsonrpc_request = JSONRPCRequest(
@@ -107,6 +109,29 @@ class OdinWorkerSession( ServerSession ):
             metadata=metadata,
         )
         self.send_sse_message(session_message)
+        
+        task_id = hashlib.sha256(f"request_{self._current_user.user_id}_{self._channel_id}_{request_id}".encode()).hexdigest()
+        start_time = time.time()
+        while True:
+            result  = AsyncResult(task_id)
+            if result.successful() or result.failed():
+                break            
+            if time.time() - start_time > request_read_timeout_seconds.total_seconds():
+                raise McpError("Request timeout")
+            time.sleep(0.1)
+
+        response: str =  result.result
+        jsonrpc_response = JSONRPCMessage(root=json.loads(response))
+        if isinstance(jsonrpc_response.root, JSONRPCError):
+            raise McpError(jsonrpc_response.root.error)
+        elif isinstance(jsonrpc_response.root, JSONRPCResponse):
+            return result_type.model_validate(jsonrpc_response.root.result)
+        else:
+            raise McpError("Invalid response")
+        
+        
+
+        
 
 
     async def send_notification(
@@ -129,7 +154,7 @@ class OdinWorkerSession( ServerSession ):
     async def _send_response(
         self,
         response: SendResultT | ErrorData,
-        request_id: int,
+        request_id: RequestId,
     ) -> None:
         if isinstance(response, ErrorData):
             jsonrpc_error = JSONRPCError(jsonrpc="2.0", id=request_id, error=response)
