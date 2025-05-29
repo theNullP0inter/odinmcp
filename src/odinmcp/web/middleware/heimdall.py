@@ -2,11 +2,10 @@ import base64
 import json
 from typing import Type
 from starlette.exceptions import HTTPException
-from models.auth import CurrentUser
+from odinmcp.models.auth import CurrentUser
 
-from config import settings
+from odinmcp.config import settings
 from starlette.requests import Request
-from models.auth import CurrentUser
 
 
 class HeimdallCurrentUserMiddleware:

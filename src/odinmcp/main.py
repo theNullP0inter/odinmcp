@@ -18,13 +18,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware import Middleware
 
-from models.auth import CurrentUser
-from web.middleware.heimdall import HeimdallCurrentUserMiddleware
-from web.middleware.hermod import HermodStreamingMiddleware
-from config import settings
-from web.transports.http_streaming import OdinHttpStreamingTransport
-from web import OdinWeb
-from constants import (
+from odinmcp.models.auth import CurrentUser
+from odinmcp.web.middleware.heimdall import HeimdallCurrentUserMiddleware
+from odinmcp.web.middleware.hermod import HermodStreamingMiddleware
+from odinmcp.config import settings
+from odinmcp.web.transports.http_streaming import OdinHttpStreamingTransport
+from odinmcp.web import OdinWeb
+from odinmcp.constants import (
     MCP_SESSION_ID_HEADER,
     LAST_EVENT_ID_HEADER,
     CONTENT_TYPE_HEADER,
@@ -36,10 +36,10 @@ from constants import (
     HERMOD_GRIP_CHANNEL_HEADER
 )
 
-from config import settings
+from odinmcp.config import settings
 from celery import Celery
 from celery.contrib.abortable import AbortableTask
-from worker import OdinWorker
+from odinmcp.worker import OdinWorker
 from mcp.server.fastmcp.server import FastMCP, Context
 from mcp.server.fastmcp.server import ToolManager, ResourceManager, PromptManager, _convert_to_content
 from mcp.types import Prompt as MCPPrompt
@@ -55,7 +55,7 @@ from mcp.types import (
     TextContent,
     ToolAnnotations,
 )
-from worker.session import OdinWorkerSession
+from odinmcp.worker.session import OdinWorkerSession
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterable, Sequence
 from pydantic.networks import AnyUrl
 from mcp.server.lowlevel.helper_types import ReadResourceContents

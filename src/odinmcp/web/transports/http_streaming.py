@@ -20,11 +20,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware import Middleware
 
-from models.auth import CurrentUser
-from web.middleware.heimdall import HeimdallCurrentUserMiddleware
-from web.middleware.hermod import HermodStreamingMiddleware
-from config import settings
-from constants import (
+from odinmcp.models.auth import CurrentUser
+from odinmcp.web.middleware.heimdall import HeimdallCurrentUserMiddleware
+from odinmcp.web.middleware.hermod import HermodStreamingMiddleware
+from odinmcp.config import settings
+from odinmcp.constants import (
     MCP_SESSION_ID_HEADER,
     LAST_EVENT_ID_HEADER,
     CONTENT_TYPE_HEADER,
@@ -36,7 +36,7 @@ from constants import (
     HERMOD_GRIP_CHANNEL_HEADER,
     HERMOD_GRIP_KEEP_ALIVE_HEADER,
 )
-from worker import OdinWorker
+from odinmcp.worker import OdinWorker
 
 
 class OdinHttpStreamingTransport:
