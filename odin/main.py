@@ -15,7 +15,9 @@ async def send_client_request_for_roots(ctx: Context) -> list[str]:
 
 @mcp.tool()
 async def very_long_running_task_will_cancel(ctx: Context) -> None:
-    time.sleep(20)
+    print("very_long_running_task_will_cancel has started")
+    time.sleep(30)
+    print("very_long_running_task_will_cancel has finished")
 
 
 

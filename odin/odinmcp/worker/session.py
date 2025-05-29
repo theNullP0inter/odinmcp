@@ -5,7 +5,7 @@ from datetime import timedelta
 import uuid
 from mcp.shared.exceptions import McpError
 from mcp.types import (
-    ClientRequest, ServerRequest, ClientNotification, ServerNotification, ClientResult, ServerResult
+    ClientRequest, ProgressNotification, ServerRequest, ClientNotification, ServerNotification, ClientResult, ServerResult
 )
 from mcp.shared.session import (
     SendRequestT, SendResultT, SendNotificationT, ReceiveResultT, ProgressFnT, RequestId
@@ -13,6 +13,7 @@ from mcp.shared.session import (
 from mcp.shared.message import MessageMetadata, SessionMessage, ServerMessageMetadata
 from mcp.server.lowlevel.server import Server as MCPServer
 from celery import Celery
+from odinmcp.constants import MCP_CELERY_PROGRESS_STATE
 from odinmcp.config import settings
 from mcp.types import JSONRPCRequest
 from odinmcp.models.auth import CurrentUser
@@ -96,11 +97,20 @@ class OdinWorkerSession( ServerSession ):
         metadata: MessageMetadata = None,
         progress_callback: ProgressFnT | None = None,
     ) -> ReceiveResultT:
-        # TODO: add support for progress_callback
         
         request_id = str(uuid.uuid4())
-
         request_data = request.model_dump(by_alias=True, mode="json", exclude_none=True)
+
+        response_task_id = self._response_task_id_generator(request_id, self._current_user, self._channel_id)
+
+        # Set up progress token if progress callback is provided
+        if progress_callback is not None:
+            if "params" not in request_data:
+                request_data["params"] = {}
+            if "_meta" not in request_data["params"]:
+                request_data["params"]["_meta"] = {}
+            request_data["params"]["_meta"]["progressToken"] = request_id
+            
         jsonrpc_request = JSONRPCRequest(
             jsonrpc="2.0",
             id=request_id,
@@ -111,13 +121,23 @@ class OdinWorkerSession( ServerSession ):
             metadata=metadata,
         )
         self.send_sse_message(session_message)
-        
-        # TODO: listen for progress notifications and call progress_callback
 
-        response_task_id = self._response_task_id_generator(request_id, self._current_user, self._channel_id)
+        
         start_time = time.time()
+        current_progress = None
         while True:
             result  = AsyncResult(response_task_id)
+            if progress_callback is not None:
+                if result.state == MCP_CELERY_PROGRESS_STATE:
+                    if current_progress != result.result["progress"]:
+                        current_progress = result.result["progress"]
+                        progress_notif = ProgressNotification.model_validate_json(current_progress)
+                        progress_callback(
+                            progress=progress_notif.params.progress,
+                            total=progress_notif.params.total,
+                            message=progress_notif.params.message,
+                        )
+
             if result.successful() or result.failed():
                 break            
             if time.time() - start_time > request_read_timeout_seconds.total_seconds():

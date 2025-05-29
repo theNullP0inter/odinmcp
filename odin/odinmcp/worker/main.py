@@ -3,14 +3,15 @@ from typing import Any, Type, Union
 from datetime import timedelta
 from celery.result import AsyncResult
 from mcp.types import (
-    CancelledNotification, ClientRequest, ServerRequest, ClientNotification, ServerNotification, ClientResult, ServerResult
+    CancelledNotification, ClientRequest, ProgressNotification, ServerRequest, ClientNotification, ServerNotification, ClientResult, ServerResult
 )
 from mcp.shared.session import (
     SendRequestT, SendResultT, SendNotificationT, ReceiveResultT, ProgressFnT
 )
 from mcp.shared.message import MessageMetadata, SessionMessage
 from mcp.server.lowlevel.server import Server as MCPServer
-from celery import Celery
+from celery import Celery, states
+from odinmcp.constants import MCP_CELERY_PROGRESS_STATE
 from odinmcp.config import settings
 from mcp.types import JSONRPCRequest, JSONRPCNotification, JSONRPCResponse, JSONRPCError
 from odinmcp.models.auth import CurrentUser
@@ -106,7 +107,6 @@ class OdinWorker:
                     response = err.error
                 except Exception as err:
                     response = ErrorData(code=0, message=str(err), data=None)
-                    print("response error: ", response)
                 finally:
                     # Reset the global state after we are done
                     if token is not None:
@@ -135,8 +135,16 @@ class OdinWorker:
                 self.worker.control.revoke(task_id)
             
 
-        # TODO: handle for progress type: ProgressNotification
-
+        if isinstance(cli_notif.root, ProgressNotification):
+            progress_id = cli_notif.root.params.progressToken
+            task_id = self._generate_response_task_id(progress_id, current_user, channel_id)
+            task = AsyncResult(task_id)
+            if not (task.successful() or task.failed() or task.state  == states.REVOKED):
+                task.backend.store_result(
+                    task_id,
+                    result=cli_notif.root.model_dump_json(by_alias=True, exclude_none=True),
+                    state=MCP_CELERY_PROGRESS_STATE,
+                )
 
         
         if type(cli_notif.root) in self.mcp_server.notification_handlers:
