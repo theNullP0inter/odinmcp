@@ -1,8 +1,9 @@
 import hashlib
 from typing import Any, Type, Union
 from datetime import timedelta
+from celery.result import AsyncResult
 from mcp.types import (
-    ClientRequest, ServerRequest, ClientNotification, ServerNotification, ClientResult, ServerResult
+    CancelledNotification, ClientRequest, ServerRequest, ClientNotification, ServerNotification, ClientResult, ServerResult
 )
 from mcp.shared.session import (
     SendRequestT, SendResultT, SendNotificationT, ReceiveResultT, ProgressFnT
@@ -25,6 +26,7 @@ from mcp.types import ErrorData
 from odinmcp.worker.session import OdinWorkerSession
 from mcp.shared.context import RequestContext
 from mcp.shared.exceptions import McpError
+# from celery.task.control import revoke
 
 class OdinWorker:
 
@@ -122,13 +124,28 @@ class OdinWorker:
     
     async def task_async_handle_mcp_notification(self, notification: str, channel_id: str, current_user: str) -> None:
         cli_notif = ClientNotification(json.loads(notification))
+        current_user = self.current_user_model.model_validate_json(current_user)
 
+        if isinstance(cli_notif.root, CancelledNotification):
+            cancelled_id = cli_notif.root.params.requestId
+            task_id = self._generate_task_id(cancelled_id, current_user, channel_id)
+            task = AsyncResult(task_id)
+            
+            if not (task.successful() or task.failed()):
+                self.worker.control.revoke(task_id)
+            
+
+        # TODO: handle for progress type: ProgressNotification
+
+
+        
         if type(cli_notif.root) in self.mcp_server.notification_handlers:
             try:
                 handler = self.mcp_server.notification_handlers[type(cli_notif.root)]
                 await handler(cli_notif.root)
             except Exception as err:
                 pass
+
             
 
     def task_handle_mcp_response(self, response: str, channel_id: str, current_user: str) -> None:
