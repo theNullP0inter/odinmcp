@@ -91,12 +91,4 @@ volumes:
   asgard_postgres_db_data: {}
 
 
-networks:
-  default:
-    driver: bridge
-  asgard_pub:
-    # open network access, please use only when necessary
-    internal: false
-  asgard_net:
-    # private, inter-system channel
-    internal: true
+
