@@ -12,6 +12,8 @@ app = typer.Typer(
 )
 
 from typing import List
+import os
+import shutil
 
 @app.command(name="run_web")
 def run_web(app_path: str, params: List[str] = typer.Argument(None)):
@@ -63,6 +65,72 @@ def run_web(app_path: str, params: List[str] = typer.Argument(None)):
     server = uvicorn.Server(config)
     asyncio.run(server.serve())
 
+
+
+@app.command(name="setup_asgard")
+def setup_asgard(
+    target_dir: str = typer.Argument(None, help="Target directory to copy asgard into. Defaults to ./asgard in the current project."),
+    force: bool = typer.Option(False, "--force", help="Overwrite existing files.")
+):
+    """
+    Copy the contents of the asgard folder into the specified target directory.
+    By default, will not overwrite existing files unless --force is specified.
+    If target_dir is not provided, defaults to ./asgard in the current working directory.
+    """
+    src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../asgard'))
+    if target_dir is None:
+        target_dir = os.path.join(os.getcwd(), "asgard")
+    target_dir = os.path.abspath(target_dir)
+
+    if not os.path.exists(src_dir):
+        typer.echo(f"Source directory does not exist: {src_dir}")
+        raise typer.Exit(code=1)
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+
+    def ignore_patterns(dir, files):
+        return [f for f in files if f.startswith('.')]
+
+    for item in os.listdir(src_dir):
+        s = os.path.join(src_dir, item)
+        d = os.path.join(target_dir, item)
+        if os.path.isdir(s):
+            if os.path.exists(d):
+                if force:
+                    shutil.rmtree(d)
+                else:
+                    typer.echo(f"Directory exists and will not be overwritten: {d}")
+                    continue
+            shutil.copytree(s, d, ignore=ignore_patterns)
+        else:
+            if os.path.exists(d) and not force:
+                typer.echo(f"File exists and will not be overwritten: {d}")
+                continue
+            shutil.copy2(s, d)
+    typer.echo(f"Copied contents of {src_dir} to {target_dir}")
+
+    # Handle .conf.example -> .conf and .env.example -> .env
+    for example_file, target_file in [(".conf.example", ".conf"), (".env.example", ".env")]:
+        example_path = os.path.join(target_dir, example_file)
+        target_path = os.path.join(target_dir, target_file)
+        if os.path.exists(example_path):
+            if os.path.exists(target_path):
+                if force:
+                    if os.path.isdir(target_path):
+                        shutil.rmtree(target_path)
+                    else:
+                        os.remove(target_path)
+                else:
+                    typer.echo(f"{target_file} exists and will not be overwritten: {target_path}")
+                    continue
+            if os.path.isdir(example_path):
+                shutil.copytree(example_path, target_path)
+                typer.echo(f"Copied directory {example_file} to {target_file} in {target_dir}")
+            else:
+                shutil.copy2(example_path, target_path)
+                typer.echo(f"Copied file {example_file} to {target_file} in {target_dir}")
+        else:
+            typer.echo(f"{example_file} not found in {target_dir}, skipping copy to {target_file}")
 
 @app.command(name="run_worker")
 def run_worker(app_path: str, params: List[str] = typer.Argument(None)):
