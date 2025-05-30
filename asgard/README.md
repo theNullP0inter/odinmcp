@@ -3,9 +3,6 @@
 Asgard provides infrasturcture to run [OdinMCP](https://github.com/odinmcp/odinmcp) in a distributed environment. This project integrates several open source components to provide authentication, API gateway management, efficient streaming, and a standardized way to connect large language models (LLMs) with data sources.
 
 
-
-
-
 ## Key Components
 
 - **Authentication and Authorization:** Managed via [Keycloak](https://www.keycloak.org) with OIDC protocols.
@@ -26,17 +23,18 @@ Asgard provides infrasturcture to run [OdinMCP](https://github.com/odinmcp/odinm
   3. Validated user information is cached in memory and shared with downstream services.
 
 
-### Streaming and Server-Sent Events (SSE)
+### Streaming
 
 - **Flow:**  
-  1. A request that supports SSE is first directed to Hermod with a header indicating SSE support.
-  2. Hermod forwards the request through Bifrost, which routes it to the necessary service/API/MCP.
-  3. The server acknowledges the request and responds with a `messages_endpoint` along with GRIP headers, instructing Hermod to hold the connection.
-  4. This process offloads the connection management from both the server and Bifrost.
-  5. Events can then be published to Hermod either via ZeroMQ or by calling the `/publish` endpoint on Hermod.
+  1. A client request (e.g., to `mcp_endpoint`) that requires Server-Sent Events (SSE) is first routed to Hermod.
+  2. Hermod forwards the request to the Bifrost gateway, adding a header to indicate SSE is expected.
+  3. The server acknowledges the request and assigns a dedicated channel, which Hermod keeps open—offloading connection management from both the server and Bifrost.
+  4. When the server needs to send events to the client, it publishes them to Hermod (typically via ZeroMQ).
+  5. Hermod then relays these events directly to the client.
+  6. If the client needs to send data back to the server, it can make a POST request to the MCP server. This request is acknowledged by the server, pushed as a task, and the response will be sent back in the initial stream.
 
 - **Solution:**  
-  By integrating the GRIP Protocol with Pushpin, Asgard effectively manages real-time communications and minimizes connection overhead on core services.
+  By leveraging the GRIP Protocol with Pushpin, Asgard efficiently manages real-time communication and significantly reduces connection overhead on core services.
 
 
 ## Services
@@ -74,17 +72,6 @@ Asgard provides infrasturcture to run [OdinMCP](https://github.com/odinmcp/odinm
   - Uses [ZeroMQ](https://zeromq.org) for scalable, distributed deployment.
 
 
-### OdinMCP
-
-**OdinMCP** is the core Model Context Protocol (MCP) controller in Asgard, built with [FastAPI](https://fastapi.tiangolo.com) and the [modelcontextprotocol/python-sdk](https://github.com/modelcontextprotocol/python-sdk). It acts as the control plane for managing context delivery, event streaming, and coordination between microservices and LLMs.
-
-#### Key Responsibilities
-
-- Central hub for context communication between services, LLMs, and clients.
-- Provides endpoints for sending, receiving, and streaming context/messages.
-- Handles session management, message publication, and event broadcasting.
-- Integrates with authentication (Heimdall/Keycloak), API gateway (Bifrost/Kong), and Hermod/Pushpin for SSE streaming.
-- Coordinates with Odin Workers (Celery) and Redis for background processing and event queuing.
 
 ### Loki (MCP Inspector)
 
@@ -107,4 +94,5 @@ Asgard provides infrasturcture to run [OdinMCP](https://github.com/odinmcp/odinm
 - [GRIP Protocol Documentation](https://pushpin.org/docs/protocols/grip/)
 - [ZeroMQ](https://zeromq.org)
 - [Model Context Protocol](https://github.com/modelcontextprotocol/python-sdk)
-- [FastAPI](https://fastapi.tiangolo.com)
+- [Starlette](https://www.starlette.io)
+- [Celery](https://docs.celeryproject.org)

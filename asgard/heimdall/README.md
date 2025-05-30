@@ -37,24 +37,14 @@ The following customizations have been made to the default Keycloak realm config
   - Purpose: Used by the frontend UI to authenticate users and call protected APIs.
   - Location: [asgard-ui client settings](http://localhost:8000/heimdall/admin/master/console/#/asgard/clients/96278a13-23b4-4a7e-a097-7301e887b047/settings)
 
-### 2. Enabled Organizations
 
-- Organization support is enabled, allowing you to group users and manage multi-tenant scenarios.
-- Users can be assigned to organizations; APIs receive organization claims in tokens.
-
-### 3. Modified Client Scope `organization` Mappers
-
-- The `organization` client scope's mappers were edited to ensure correct claims are included in tokens.
-- The `organization` scope is now a **default scope**, so all tokens include organization information automatically.
-- See: [organization client scope mappers](http://localhost:8000/heimdall/admin/master/console/#/asgard/client-scopes/7ffc2f3f-ff4c-49bc-a5d4-7eed65dc174d/mappers/76712ed4-598b-4ed2-9809-13e2a7768714/edit)
-
-### 4. Added `user_id` Mapper to Client Scope `profile`
+### 2. Added `user_id` Mapper to Client Scope `profile`
 
 - The `profile` client scope now includes a `user_id` claim in tokens.
 - This allows downstream services and APIs to easily identify the authenticated user.
 - See: [profile client scope mappers](http://localhost:8000/heimdall/admin/master/console/#/asgard/client-scopes/d0bbfb37-9c46-48ee-916f-4845133fa329/mappers)
 
-### 5. Whitelisting Trusted Hosts for Client Registration
+### 3. Whitelisting Trusted Hosts for Client Registration
 
 To allow client registration from specific domains, you must add your trusted host domains to the **Trusted Hosts Policy**:
 
