@@ -12,6 +12,24 @@
 
 ## Table of Contents
 
+- [Overview](#overview)
+- [Problem Statement](#problem-statement)
+- [Architecture](#architecture)
+- [Installation](#installation)
+- [Quickstart](#quickstart)
+  - [How to Deploy](#how-to-deploy)
+    - [Project Setup](#1-project-setuponly-once)
+    - [Start Asgard Proxies and Services](#2-start-asgard-proxies-and-services)
+    - [Start the Web Server](#3-start-the-web-server--in-a-new-terminal-)
+    - [Start the Worker Process](#4-start-the-worker-process--in-a-new-terminal-)
+- [Migrating from mcp.FastMCP to OdinMCP](#migrating-from-mcpfastmcp-to-odinmcp)
+- [Deployment](#deployment)
+  - [Deploying Asgard with Docker Compose](#deploying-asgard-with-docker-compose)
+  - [Web Server](#web-server)
+  - [Worker Process](#worker-process)
+- [Contributing](#contributing)
+- [License](#license)
+
 
 ## Overview
 
@@ -127,17 +145,26 @@ You can now run this file using the CLI commands below.
 
 
 
-## Migrating from FastMCP to OdinMCP
+## Migrating from mcp.FastMCP to OdinMCP
 
 OdinMCP is a drop-in replacement for FastMCP with improved scalability and streaming. To migrate:
 
-- **Uninstall FastMCP:** `pip uninstall fastmcp`
+- **Uninstall mcp:** `pip uninstall mcp`
 - **Install OdinMCP:** `pip install odinmcp`
 - **Update Imports:** Replace `from mcp.server.fastmcp import FastMCP` with `from odinmcp import OdinWeb` (or `OdinMCP` as appropriate)
 - **Replace Class Names:** Change `FastMCP` to `OdinWeb` (or `OdinMCP`)
 - **App Creation:** Use `app, worker = mcp.sse_app()` instead of `app = mcp.streamable_http_app()`
 
 ### Deployment
+
+#### Deploying Asgard with Docker Compose
+To start all Asgard infrastructure services (API gateway, authentication, streaming, etc.), use Docker Compose:
+
+```bash
+cd ./asgard
+docker-compose up
+```
+This will launch all required proxies and services for distributed operation. Make sure you have run `odinmcp setup_asgard` first to generate the Asgard directory structure.
 
 #### Web Server
 - **FastMCP:**
