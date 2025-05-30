@@ -1,6 +1,5 @@
 [project]
 name = "odinmcp"
-version = "0.1.0"
 description = ""
 authors = [
     {name = "theNullP0inter",email = "nikhilallamsetti@gmail.com"}
