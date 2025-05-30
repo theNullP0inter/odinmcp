@@ -1,6 +1,8 @@
 # Asgard
 
-Asgard provides infrasturcture to run [OdinMCP](https://github.com/odinmcp/odinmcp) in a distributed environment. This project integrates several open source components to provide authentication, API gateway management, efficient streaming, and a standardized way to connect large language models (LLMs) with data sources.
+Asgard provides infrastructure to run [OdinMCP](https://github.com/odinmcp/odinmcp) in a distributed environment. This project integrates several open source components to provide authentication, API gateway management, efficient streaming, and a standardized way to connect large language models (LLMs) with data sources.
+
+![Asgard Architecture Diagram](../docs/images/architecture.jpg)
 
 
 ## Key Components

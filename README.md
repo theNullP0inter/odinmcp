@@ -1,7 +1,7 @@
 # OdinMCP
 
 <div align="center">
-<strong>O</strong>utrageously <strong>D</strong>istributed <strong>I</strong>nfrastructure <strong>N</strong>etwork for MCP servers.
+<h3><strong>O</strong>utrageously <strong>D</strong>istributed <strong>I</strong>nfrastructure <strong>N</strong>etwork for MCP servers.</h3>
 
 
 [![PyPI][pypi-badge]][pypi-url]
@@ -48,6 +48,8 @@ The goal of OdinMCP is to address challenges related to:
 ## Architecture
 
 OdinMCP is designed to operate as a distributed system, enabling secure, scalable, and efficient management of large language models (LLMs) and their connections to diverse data sources. The architecture brings together several critical capabilities: authentication, API gateway management, real-time streaming, and a unified inspector UI for testing and event streaming.
+
+![OdinMCP Architecture Diagram](docs/images/architecture.jpg)
 
 At the core of this distributed architecture is **Asgard**, which provides the infrastructure layer that integrates and orchestrates these capabilities. Asgard leverages several open source components to deliver a robust and modular platform:
 
