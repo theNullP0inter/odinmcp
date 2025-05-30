@@ -15,13 +15,13 @@ from typing import List
 import os
 import shutil
 
-@app.command(name="run_web")
-def run_web(app_path: str, params: List[str] = typer.Argument(None)):
+@app.command(name="web")
+def web(app_path: str, params: List[str] = typer.Argument(None)):
     """
     Run a web app with uvicorn. 
     app_path should be in the format 'module:attr', e.g., 'test_app.main:web'
     Any additional CLI arguments will be passed as kwargs to uvicorn.Config, e.g.:
-    odinmcp run_web test_app.main:web --host 0.0.0.0 --port 8080
+    odinmcp web test_app.main:web --host 0.0.0.0 --port 8080
     """
     import uvicorn
 
@@ -132,13 +132,13 @@ def setup_asgard(
         else:
             typer.echo(f"{example_file} not found in {target_dir}, skipping copy to {target_file}")
 
-@app.command(name="run_worker")
-def run_worker(app_path: str, params: List[str] = typer.Argument(None)):
+@app.command(name="worker")
+def worker(app_path: str, params: List[str] = typer.Argument(None)):
     """
     Run a worker app with celery. 
     app_path should be in the format 'module:attr', e.g., 'test_app.main:worker'
     Any additional CLI arguments will be passed as kwargs to celery, e.g.:
-    odinmcp run_worker test_app.main:worker --broker redis://localhost:6379/0 --result-backend redis://localhost:6379/0
+    odinmcp worker test_app.main:worker --broker redis://localhost:6379/0 --result-backend redis://localhost:6379/0
     """
 
     from celery import Celery
