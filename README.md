@@ -127,15 +127,15 @@ You can now run this file using the CLI commands below.
 
 3. **Start the Web Server** ( in a new terminal )
    ```bash
-   odinmcp web server:app --host 0.0.0.0 --port 80
+   odinmcp web server.py:web --host 0.0.0.0 --port 80
    ```
-   Launches the Starlette ASGI web server. Replace `server:app` with your module and app variable (e.g., `myproject.main:web`).
+   Launches the Starlette ASGI web server. Replace `server.py:web` with your module and app variable (e.g., `myproject.main.py:web`).
 
 4. **Start the Worker Process** ( in a new terminal )
    ```bash
-   odinmcp worker server:worker --loglevel=info
+   odinmcp worker server.py:worker --loglevel=info
    ```
-   Starts the Celery worker for distributed task processing. Replace `server:worker` with your module and worker variable. You can run any number of workers for distributed task processing.
+   Starts the Celery worker for distributed task processing. Replace `server.py:worker` with your module and worker variable. You can run any number of workers for distributed task processing.
 
 
 
