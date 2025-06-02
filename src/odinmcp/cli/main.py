@@ -69,6 +69,12 @@ def web(app_path: str, params: List[str] = typer.Argument(None)):
     asyncio.run(server.serve())
 
 
+def ensure_folder(path):
+    """
+    Create a folder if it does not exist.
+    """
+    os.makedirs(path, exist_ok=True)
+
 @app.command(name="setup_asgard")
 def setup_asgard(
     target_dir: str = typer.Argument(None, help="Target directory to copy asgard into. Defaults to ./asgard in the current project."),
@@ -93,7 +99,7 @@ def setup_asgard(
     if target_dir is None:
         target_dir = os.path.join(os.getcwd(), "asgard")
     target_dir = os.path.abspath(target_dir)
-    os.makedirs(target_dir, exist_ok=True)
+    ensure_folder(target_dir)
 
     def ignore_patterns(dir, files):
         return [f for f in files if f.startswith('.')]
