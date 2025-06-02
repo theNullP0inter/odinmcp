@@ -31,8 +31,22 @@ def web(app_path: str, params: List[str] = typer.Argument(None)):
     if ':' not in app_path:
         raise typer.BadParameter("app_path must be in the format 'module:attr', e.g., 'test_app.main:web'")
 
+    import sys
+    import os
     module_path, app_attr = app_path.split(':', 1)
-    module = importlib.import_module(module_path)
+
+    # Support file path or module path
+    if module_path.endswith('.py') or os.path.isfile(module_path):
+        file_path = os.path.abspath(module_path)
+        module_dir = os.path.dirname(file_path)
+        module_file = os.path.basename(file_path)
+        module_name = os.path.splitext(module_file)[0]
+        if module_dir not in sys.path:
+            sys.path.insert(0, module_dir)
+        module = importlib.import_module(module_name)
+    else:
+        module = importlib.import_module(module_path)
+
     asgi_app = getattr(module, app_attr, None)
     if asgi_app is None:
         raise typer.BadParameter(f"Module '{module_path}' does not have attribute '{app_attr}'")
@@ -161,8 +175,22 @@ def worker(app_path: str, params: List[str] = typer.Argument(None)):
     if ':' not in app_path:
         raise typer.BadParameter("app_path must be in the format 'module:attr', e.g., 'test_app.main:worker'")
     
+    import sys
+    import os
     module_path, app_attr = app_path.split(':', 1)
-    module = importlib.import_module(module_path)
+
+    # Support file path or module path
+    if module_path.endswith('.py') or os.path.isfile(module_path):
+        file_path = os.path.abspath(module_path)
+        module_dir = os.path.dirname(file_path)
+        module_file = os.path.basename(file_path)
+        module_name = os.path.splitext(module_file)[0]
+        if module_dir not in sys.path:
+            sys.path.insert(0, module_dir)
+        module = importlib.import_module(module_name)
+    else:
+        module = importlib.import_module(module_path)
+
     celery_app: Celery = getattr(module, app_attr, None)
     if celery_app is None:
         raise typer.BadParameter(f"Module '{module_path}' does not have attribute '{app_attr}'")
@@ -171,3 +199,4 @@ def worker(app_path: str, params: List[str] = typer.Argument(None)):
 
     argv = ["worker"] + (params or [])
     celery_app.worker_main(argv=argv)
+
