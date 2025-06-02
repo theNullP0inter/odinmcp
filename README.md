@@ -173,14 +173,14 @@ This will launch all required proxies and services for distributed operation. Ma
   - `uvicorn server:app --host 0.0.0.0 --port 80`
   - or `mcp dev server.py`
 - **OdinMCP:**
-  - `odinmcp web server:app --host 0.0.0.0 --port 80`
+  - `odinmcp web server.py:web --host 0.0.0.0 --port 80`
   - or use any ASGI server (e.g., Uvicorn) as above
 
 #### Worker Process
 - **FastMCP:**
   - No explicit background worker; FastMCP does not support distributed background processing.
 - **OdinMCP:**
-  - `odinmcp worker server:worker --loglevel=info`
+  - `odinmcp worker server.py:worker --loglevel=info`
   - or `celery -A server worker --loglevel=info`
   - The worker must be started separately for distributed task processing.
 
