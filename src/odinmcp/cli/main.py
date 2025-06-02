@@ -3,6 +3,12 @@ import importlib
 from starlette.applications import Starlette
 import typer
 import asyncio
+import importlib.resources as pkg_resources
+from pathlib import Path
+from typing import List
+import os
+import shutil
+
 
 app = typer.Typer(
     name="odinmcp",
@@ -11,9 +17,6 @@ app = typer.Typer(
     no_args_is_help=True,  # Show help if no args provided
 )
 
-from typing import List
-import os
-import shutil
 
 @app.command(name="web")
 def web(app_path: str, params: List[str] = typer.Argument(None)):
@@ -66,36 +69,41 @@ def web(app_path: str, params: List[str] = typer.Argument(None)):
     asyncio.run(server.serve())
 
 
-
 @app.command(name="setup_asgard")
 def setup_asgard(
     target_dir: str = typer.Argument(None, help="Target directory to copy asgard into. Defaults to ./asgard in the current project."),
     force: bool = typer.Option(False, "--force", help="Overwrite existing files.")
 ):
     """
-    Copy the contents of the asgard folder into the specified target directory.
+    Copy the contents of the asgard folder (package data) into the specified target directory.
     By default, will not overwrite existing files unless --force is specified.
     If target_dir is not provided, defaults to ./asgard in the current working directory.
     """
-    src_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../asgard'))
+    # Use importlib.resources to access the asgard directory inside the odinmcp package
+    try:
+        asgard_root = pkg_resources.files("odinmcp").joinpath("asgard")
+    except Exception as e:
+        typer.echo(f"Could not locate asgard package data: {e}")
+        raise typer.Exit(code=1)
+
+    if not asgard_root.exists():
+        typer.echo(f"asgard directory not found in package resources: {asgard_root}")
+        raise typer.Exit(code=1)
+
     if target_dir is None:
         target_dir = os.path.join(os.getcwd(), "asgard")
     target_dir = os.path.abspath(target_dir)
-
-    if not os.path.exists(src_dir):
-        typer.echo(f"Source directory does not exist: {src_dir}")
-        raise typer.Exit(code=1)
-    if not os.path.exists(target_dir):
-        os.makedirs(target_dir)
+    os.makedirs(target_dir, exist_ok=True)
 
     def ignore_patterns(dir, files):
         return [f for f in files if f.startswith('.')]
 
-    for item in os.listdir(src_dir):
-        s = os.path.join(src_dir, item)
-        d = os.path.join(target_dir, item)
-        if os.path.isdir(s):
-            if os.path.exists(d):
+    # Recursively copy asgard package data to target_dir
+    for item in asgard_root.iterdir():
+        s = item
+        d = Path(target_dir) / item.name
+        if s.is_dir():
+            if d.exists():
                 if force:
                     shutil.rmtree(d)
                 else:
@@ -103,27 +111,27 @@ def setup_asgard(
                     continue
             shutil.copytree(s, d, ignore=ignore_patterns)
         else:
-            if os.path.exists(d) and not force:
+            if d.exists() and not force:
                 typer.echo(f"File exists and will not be overwritten: {d}")
                 continue
             shutil.copy2(s, d)
-    typer.echo(f"Copied contents of {src_dir} to {target_dir}")
+    typer.echo(f"Copied contents of {asgard_root} to {target_dir}")
 
     # Handle conf.example -> .conf and env.example -> .env
     for example_file, target_file in [("conf.example", ".conf"), ("env.example", ".env")]:
-        example_path = os.path.join(target_dir, example_file)
-        target_path = os.path.join(target_dir, target_file)
-        if os.path.exists(example_path):
-            if os.path.exists(target_path):
+        example_path = Path(target_dir) / example_file
+        target_path = Path(target_dir) / target_file
+        if example_path.exists():
+            if target_path.exists():
                 if force:
-                    if os.path.isdir(target_path):
+                    if target_path.is_dir():
                         shutil.rmtree(target_path)
                     else:
-                        os.remove(target_path)
+                        target_path.unlink()
                 else:
                     typer.echo(f"{target_file} exists and will not be overwritten: {target_path}")
                     continue
-            if os.path.isdir(example_path):
+            if example_path.is_dir():
                 shutil.copytree(example_path, target_path)
                 typer.echo(f"Copied directory {example_file} to {target_file} in {target_dir}")
             else:
