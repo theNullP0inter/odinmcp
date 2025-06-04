@@ -8,11 +8,14 @@
 [![MIT licensed][mit-badge]][mit-url]
 [![Python Version][python-badge]][python-url]
 
-</div>
+
 
 [![Watch the Demo](https://img.youtube.com/vi/rV73lDDKYqg/0.jpg)](https://youtu.be/rV73lDDKYqg)
 
 You can watch the demo video for this project above or [on YouTube](https://youtu.be/rV73lDDKYqg).
+
+</div>
+
 
 
 
