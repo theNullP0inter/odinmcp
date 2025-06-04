@@ -10,6 +10,10 @@
 
 </div>
 
+[![Watch the Demo](https://img.youtube.com/vi/rV73lDDKYqg/0.jpg)](https://youtu.be/rV73lDDKYqg)
+
+You can watch the demo video for this project above or [on YouTube](https://youtu.be/rV73lDDKYqg).
+
 
 
 ## Table of Contents
@@ -145,12 +149,6 @@ You can now run this file using the CLI commands below.
 > **Note:**
 > - The web server and worker process must be started separately for full functionality.
 > - You can use the standard Uvicorn and Celery CLIs if you prefer, but the OdinMCP CLI provides a unified interface.
-
-### Demo Video
-
-[![Watch the Demo](https://img.youtube.com/vi/rV73lDDKYqg/0.jpg)](https://youtu.be/rV73lDDKYqg)
-
-You can watch the demo video for this project above or [on YouTube](https://youtu.be/rV73lDDKYqg).
 
 ## Migrating from mcp.FastMCP to OdinMCP
 
